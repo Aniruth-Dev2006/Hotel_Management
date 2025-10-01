@@ -829,3 +829,311 @@ HotelMaster Team
 
 ================================================================================
 
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 12:57:19 am
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Sailesh! ✨
+
+Your booking request has been received:
+📍 Room: 2 (Double)
+💰 Price: ₹2000/night
+📅 Check-in: 3/10/2025
+📅 Check-out: 4/10/2025
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:57:19 am
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Sailesh
+   Phone: 8883731888
+   Email: sailesh@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 2
+   Room Type: Double
+   Price: ₹2000/night
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68dd8097a956530b82fa3055
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 12:57:33 am
+📋 TYPE: BOOKING APPROVED BY ADMIN
+================================================================================
+
+✅ BOOKING CONFIRMED!
+
+Hello Sailesh! 🎉
+
+Great news! Your booking has been APPROVED by the admin:
+
+📍 Room: 2
+📅 Check-in: 3/10/2025
+📅 Check-out: 4/10/2025
+✨ Status: Confirmed
+
+You can now check-in on your arrival date from your dashboard!
+
+See you soon at HotelMaster! 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 12:57:43 am
+📋 TYPE: CHECK-IN SUCCESSFUL
+================================================================================
+
+🔑 CHECKED IN SUCCESSFULLY!
+
+Welcome Sailesh! 🌟
+
+You have successfully checked into:
+📍 Room: 2
+📅 Check-out: 4/10/2025
+
+Enjoy your stay! When you're ready to leave, you can check-out from your dashboard.
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:57:43 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Sailesh
+Status Changed: → Active
+Guest has checked in
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 12:57:46 am
+📋 TYPE: CHECK-OUT SUCCESSFUL
+================================================================================
+
+👋 CHECKED OUT SUCCESSFULLY!
+
+Thank you for staying with us, Sailesh! 💙
+
+Room 2 checkout completed.
+We hope you had a wonderful experience!
+
+We look forward to hosting you again! 🌟
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:57:46 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Sailesh
+Status Changed: → Completed
+Guest has checked out
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 1:00:24 am
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Sailesh! ✨
+
+Your booking request has been received:
+📍 Room: 1 (Single)
+💰 Price: ₹1500/night
+📅 Check-in: 4/10/2025
+📅 Check-out: 16/10/2025
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:00:24 am
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Sailesh
+   Phone: 8883731888
+   Email: sailesh@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 1
+   Room Type: Single
+   Price: ₹1500/night
+   Check-in: 4/10/2025
+   Check-out: 16/10/2025
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68dd8150a956530b82fa30a4
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 1:00:40 am
+📋 TYPE: BOOKING APPROVED BY ADMIN
+================================================================================
+
+✅ BOOKING CONFIRMED!
+
+Hello Sailesh! 🎉
+
+Great news! Your booking has been APPROVED by the admin:
+
+📍 Room: 1
+📅 Check-in: 4/10/2025
+📅 Check-out: 16/10/2025
+✨ Status: Confirmed
+
+You can now check-in on your arrival date from your dashboard!
+
+See you soon at HotelMaster! 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 1:00:43 am
+📋 TYPE: CHECK-IN SUCCESSFUL
+================================================================================
+
+🔑 CHECKED IN SUCCESSFULLY!
+
+Welcome Sailesh! 🌟
+
+You have successfully checked into:
+📍 Room: 1
+📅 Check-out: 16/10/2025
+
+Enjoy your stay! When you're ready to leave, you can check-out from your dashboard.
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:00:43 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 1:
+Guest: Sailesh
+Status Changed: → Active
+Guest has checked in
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 1:00:44 am
+📋 TYPE: CHECK-OUT SUCCESSFUL
+================================================================================
+
+👋 CHECKED OUT SUCCESSFULLY!
+
+Thank you for staying with us, Sailesh! 💙
+
+Room 1 checkout completed.
+We hope you had a wonderful experience!
+
+We look forward to hosting you again! 🌟
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:00:44 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 1:
+Guest: Sailesh
+Status Changed: → Completed
+Guest has checked out
+
+================================================================================
+

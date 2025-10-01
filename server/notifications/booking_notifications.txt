@@ -385,3 +385,447 @@ Guest has checked out
 
 ================================================================================
 
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 1/10/2025, 11:42:10 pm
+📋 TYPE: ADMIN ALERT - NEW FEEDBACK
+================================================================================
+
+🔔 NEW FEEDBACK RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 FROM:
+   Name: Aniruth
+   Email: aniruthrajagopal2006@gmail.com
+
+📝 FEEDBACK DETAILS:
+   Subject: sugggestion
+   Rating: ⭐⭐⭐ (3/5)
+   
+   Message:
+   add a water heater in all of the rooms 
+
+
+📊 STATUS: Pending Review
+   Feedback ID: 68dd6efa9800dac19b34f485
+   
+⚡ ACTION REQUIRED:
+   Please review in the admin dashboard
+   Go to: Feedback → Review
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 1/10/2025, 11:50:16 pm
+📋 TYPE: ADMIN NOTIFICATION
+================================================================================
+
+📢 NOTIFICATION FROM HOTELMASTER
+
+Hello Aniruth! 👋
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 feedback update
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+thanks for giving feedback and you feedback is updated 
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Thank you for being a valued guest at HotelMaster! 🏨
+
+Best regards,
+HotelMaster Team
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:09:11 am
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Aniruth! ✨
+
+Your booking request has been received:
+📍 Room: 2 (Double)
+💰 Price: ₹2000/night
+📅 Check-in: 3/10/2025
+📅 Check-out: 4/10/2025
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:09:11 am
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Aniruth
+   Phone: 9361377458
+   Email: aniruthrajagopal2006@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 2
+   Room Type: Double
+   Price: ₹2000/night
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68dd754fadc41530c47d3678
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:09:53 am
+📋 TYPE: BOOKING APPROVED BY ADMIN
+================================================================================
+
+✅ BOOKING CONFIRMED!
+
+Hello Aniruth! 🎉
+
+Great news! Your booking has been APPROVED by the admin:
+
+📍 Room: 2
+📅 Check-in: 3/10/2025
+📅 Check-out: 4/10/2025
+✨ Status: Confirmed
+
+You can now check-in on your arrival date from your dashboard!
+
+See you soon at HotelMaster! 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:10:02 am
+📋 TYPE: CHECK-IN SUCCESSFUL
+================================================================================
+
+🔑 CHECKED IN SUCCESSFULLY!
+
+Welcome Aniruth! 🌟
+
+You have successfully checked into:
+📍 Room: 2
+📅 Check-out: 4/10/2025
+
+Enjoy your stay! When you're ready to leave, you can check-out from your dashboard.
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:10:02 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Aniruth
+Status Changed: → Active
+Guest has checked in
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:10:18 am
+📋 TYPE: CHECK-OUT SUCCESSFUL
+================================================================================
+
+👋 CHECKED OUT SUCCESSFULLY!
+
+Thank you for staying with us, Aniruth! 💙
+
+Room 2 checkout completed.
+We hope you had a wonderful experience!
+
+We look forward to hosting you again! 🌟
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:10:18 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Aniruth
+Status Changed: → Completed
+Guest has checked out
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:48:38 am
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Aniruth! ✨
+
+Your booking request has been received:
+📍 Room: 2 (Double)
+💰 Price: ₹2000/night
+📅 Check-in: 3/10/2025
+📅 Check-out: 5/10/2025
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:48:38 am
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Aniruth
+   Phone: 9361377458
+   Email: aniruthrajagopal2006@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 2
+   Room Type: Double
+   Price: ₹2000/night
+   Check-in: 3/10/2025
+   Check-out: 5/10/2025
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68dd7e8e9f336cdd46199e90
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:48:55 am
+📋 TYPE: BOOKING APPROVED BY ADMIN
+================================================================================
+
+✅ BOOKING CONFIRMED!
+
+Hello Aniruth! 🎉
+
+Great news! Your booking has been APPROVED by the admin:
+
+📍 Room: 2
+📅 Check-in: 3/10/2025
+📅 Check-out: 5/10/2025
+✨ Status: Confirmed
+
+You can now check-in on your arrival date from your dashboard!
+
+See you soon at HotelMaster! 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:49:01 am
+📋 TYPE: CHECK-IN SUCCESSFUL
+================================================================================
+
+🔑 CHECKED IN SUCCESSFULLY!
+
+Welcome Aniruth! 🌟
+
+You have successfully checked into:
+📍 Room: 2
+📅 Check-out: 5/10/2025
+
+Enjoy your stay! When you're ready to leave, you can check-out from your dashboard.
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:49:01 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Aniruth
+Status Changed: → Active
+Guest has checked in
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:49:14 am
+📋 TYPE: CHECK-OUT SUCCESSFUL
+================================================================================
+
+👋 CHECKED OUT SUCCESSFULLY!
+
+Thank you for staying with us, Aniruth! 💙
+
+Room 2 checkout completed.
+We hope you had a wonderful experience!
+
+We look forward to hosting you again! 🌟
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 12:49:14 am
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Aniruth
+Status Changed: → Completed
+Guest has checked out
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 12:50:39 am
+📋 TYPE: ADMIN NOTIFICATION
+================================================================================
+
+📢 NOTIFICATION FROM HOTELMASTER
+
+Hello Aniruth! 👋
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 App condition
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+App is ready to deploy 
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Thank you for being a valued guest at HotelMaster! 🏨
+
+Best regards,
+HotelMaster Team
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 8883731888
+⏰ TIME: 2/10/2025, 12:50:39 am
+📋 TYPE: ADMIN NOTIFICATION
+================================================================================
+
+📢 NOTIFICATION FROM HOTELMASTER
+
+Hello Sailesh! 👋
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 App condition
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+App is ready to deploy 
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Thank you for being a valued guest at HotelMaster! 🏨
+
+Best regards,
+HotelMaster Team
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 1234567890
+⏰ TIME: 2/10/2025, 12:50:39 am
+📋 TYPE: ADMIN NOTIFICATION
+================================================================================
+
+📢 NOTIFICATION FROM HOTELMASTER
+
+Hello Test User! 👋
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 App condition
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+App is ready to deploy 
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Thank you for being a valued guest at HotelMaster! 🏨
+
+Best regards,
+HotelMaster Team
+
+================================================================================
+

@@ -196,9 +196,70 @@ const bookingSchema = new mongoose.Schema({
     checkInDate: { type: Date, required: true },
     checkOutDate: { type: Date, required: true },
     status: { type: String, enum: ['Requested', 'Confirmed', 'Active', 'Completed', 'Rejected'], default: 'Requested' },
+    redeemedOffer: { type: mongoose.Schema.Types.ObjectId, ref: 'Offer' },
+    finalAmount: { type: Number },
     createdAt: { type: Date, default: Date.now }
 });
 const Booking = mongoose.model('Booking', bookingSchema);
+
+// Feedback Schema
+const feedbackSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userName: { type: String, required: true },
+    userEmail: { type: String, required: true },
+    subject: { type: String, required: true },
+    message: { type: String, required: true },
+    rating: { type: Number, min: 1, max: 5, required: true },
+    isResolved: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+});
+const Feedback = mongoose.model('Feedback', feedbackSchema);
+
+// Custom Notification Schema
+const customNotificationSchema = new mongoose.Schema({
+    recipientType: { type: String, enum: ['all', 'specific'], required: true },
+    recipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    subject: { type: String, required: true },
+    message: { type: String, required: true },
+    sentBy: { type: String, default: 'Admin' },
+    createdAt: { type: Date, default: Date.now }
+});
+const CustomNotification = mongoose.model('CustomNotification', customNotificationSchema);
+
+// Credit System Schema
+const creditSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    points: { type: Number, default: 0 },
+    totalEarned: { type: Number, default: 0 },
+    totalRedeemed: { type: Number, default: 0 },
+    lastUpdated: { type: Date, default: Date.now }
+});
+const Credit = mongoose.model('Credit', creditSchema);
+
+// Credit Transaction Schema
+const creditTransactionSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    type: { type: String, enum: ['earned', 'redeemed', 'expired', 'bonus'], required: true },
+    points: { type: Number, required: true },
+    description: { type: String, required: true },
+    booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' },
+    offer: { type: mongoose.Schema.Types.ObjectId, ref: 'Offer' },
+    createdAt: { type: Date, default: Date.now }
+});
+const CreditTransaction = mongoose.model('CreditTransaction', creditTransactionSchema);
+
+// Offer Schema
+const offerSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    pointsRequired: { type: Number, required: true },
+    discountType: { type: String, enum: ['percentage', 'fixed'], required: true },
+    discountValue: { type: Number, required: true },
+    isActive: { type: Boolean, default: true },
+    validUntil: { type: Date },
+    createdAt: { type: Date, default: Date.now }
+});
+const Offer = mongoose.model('Offer', offerSchema);
 
 
 // --- API Endpoints ---
@@ -328,10 +389,77 @@ app.get('/api/bookings', async (req, res) => {
 
 // UPDATED: New bookings are now 'Requested' by default and include user association
 app.post('/api/bookings/add', async (req, res) => {
-    const { guestName, room, checkInDate, checkOutDate, userId } = req.body;
+    const { guestName, room, checkInDate, checkOutDate, userId, redeemedOfferId } = req.body;
     try {
         if (!userId) {
             return res.status(400).json('User ID is required for booking.');
+        }
+        
+        let finalAmount = 0;
+        let creditTransaction = null;
+        
+        // Handle credit redemption if offer is selected
+        if (redeemedOfferId) {
+            try {
+                const offer = await Offer.findById(redeemedOfferId);
+                if (!offer || !offer.isActive) {
+                    return res.status(400).json({ message: 'Invalid or inactive offer.' });
+                }
+                
+                // Check user credits
+                let userCredit = await Credit.findOne({ user: userId });
+                if (!userCredit) {
+                    userCredit = new Credit({ user: userId });
+                    await userCredit.save();
+                }
+                
+                if (userCredit.points < offer.pointsRequired) {
+                    return res.status(400).json({ message: 'Insufficient credits for this offer.' });
+                }
+                
+                // Get room details for price calculation
+                const roomData = await Room.findById(room);
+                if (!roomData) {
+                    return res.status(404).json({ message: 'Room not found.' });
+                }
+                
+                // Calculate total amount
+                const checkIn = new Date(checkInDate);
+                const checkOut = new Date(checkOutDate);
+                const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                const totalAmount = roomData.price * nights;
+                
+                // Calculate discount
+                let discountAmount = 0;
+                if (offer.discountType === 'percentage') {
+                    discountAmount = (totalAmount * offer.discountValue) / 100;
+                } else {
+                    discountAmount = offer.discountValue;
+                }
+                
+                // Apply discount (don't allow negative amounts)
+                finalAmount = Math.max(0, totalAmount - discountAmount);
+                
+                // Deduct credits with proper number conversion
+                userCredit.points = (Number(userCredit.points) || 0) - Number(offer.pointsRequired);
+                userCredit.totalRedeemed = (Number(userCredit.totalRedeemed) || 0) + Number(offer.pointsRequired);
+                userCredit.lastUpdated = new Date();
+                await userCredit.save();
+                
+                // Create credit transaction
+                creditTransaction = new CreditTransaction({
+                    user: userId,
+                    type: 'redeemed',
+                    points: -offer.pointsRequired,
+                    description: `Redeemed: ${offer.title} for booking`,
+                    offer: offer._id
+                });
+                await creditTransaction.save();
+                
+            } catch (creditError) {
+                console.error('Error processing credit redemption:', creditError);
+                return res.status(400).json({ message: 'Error processing credit redemption.' });
+            }
         }
         
         const newBooking = new Booking({ 
@@ -340,9 +468,17 @@ app.post('/api/bookings/add', async (req, res) => {
             user: userId,
             checkInDate, 
             checkOutDate, 
-            status: 'Requested' // All new bookings are now requests
+            status: 'Requested', // All new bookings are now requests
+            redeemedOffer: redeemedOfferId || null,
+            finalAmount: finalAmount || null
         });
         await newBooking.save();
+        
+        // Link credit transaction to booking if applicable
+        if (creditTransaction) {
+            creditTransaction.booking = newBooking._id;
+            await creditTransaction.save();
+        }
         
         const populatedBooking = await Booking.findById(newBooking._id)
             .populate('room')
@@ -423,6 +559,47 @@ app.put('/api/bookings/:id/status', async (req, res) => {
             await Room.findByIdAndUpdate(booking.room._id, { isBooked: true });
         } else if (status === 'Completed' || status === 'Rejected') {
             await Room.findByIdAndUpdate(booking.room._id, { isBooked: false });
+        }
+
+        // Award credits when booking is completed
+        if (status === 'Completed') {
+            try {
+                // Calculate credits based on room price and duration
+                const roomPrice = booking.room.price;
+                const checkIn = new Date(booking.checkInDate);
+                const checkOut = new Date(booking.checkOutDate);
+                const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                
+                // Award 1 credit per ₹100 spent (adjust as needed)
+                const creditsEarned = Math.floor((roomPrice * nights) / 100);
+                
+                if (creditsEarned > 0) {
+                    // Update user credits
+                    let userCredit = await Credit.findOne({ user: booking.user._id });
+                    if (!userCredit) {
+                        userCredit = new Credit({ user: booking.user._id });
+                    }
+                    
+                    // Ensure proper number conversion
+                    userCredit.points = (Number(userCredit.points) || 0) + creditsEarned;
+                    userCredit.totalEarned = (Number(userCredit.totalEarned) || 0) + creditsEarned;
+                    userCredit.lastUpdated = new Date();
+                    await userCredit.save();
+                    
+                    // Create transaction record
+                    const transaction = new CreditTransaction({
+                        user: booking.user._id,
+                        type: 'earned',
+                        points: creditsEarned,
+                        description: `Earned from booking: Room ${booking.room.roomNumber} (${nights} nights)`,
+                        booking: booking._id
+                    });
+                    await transaction.save();
+                }
+            } catch (creditError) {
+                console.error('Error awarding credits:', creditError);
+                // Don't fail the booking update if credit system fails
+            }
         }
 
         // Send notifications based on status change
@@ -560,6 +737,596 @@ app.delete('/api/notifications/clear', (req, res) => {
             success: false, 
             message: 'Failed to clear notifications: ' + error.message 
         });
+    }
+});
+
+// --- Feedback Routes ---
+
+// Get all feedback (for admin)
+app.get('/api/feedback', async (req, res) => {
+    try {
+        const feedback = await Feedback.find().populate('user', 'name email phone').sort({ createdAt: -1 });
+        res.json(feedback);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching feedback: ' + err.message });
+    }
+});
+
+// Get feedback by user ID
+app.get('/api/feedback/user/:userId', async (req, res) => {
+    try {
+        const feedback = await Feedback.find({ user: req.params.userId }).sort({ createdAt: -1 });
+        res.json(feedback);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching user feedback: ' + err.message });
+    }
+});
+
+// Submit new feedback
+app.post('/api/feedback/add', async (req, res) => {
+    const { userId, userName, userEmail, subject, message, rating } = req.body;
+    try {
+        if (!userId || !userName || !userEmail || !subject || !message || !rating) {
+            return res.status(400).json({ message: 'All fields are required.' });
+        }
+
+        const newFeedback = new Feedback({
+            user: userId,
+            userName,
+            userEmail,
+            subject,
+            message,
+            rating
+        });
+        
+        await newFeedback.save();
+        
+        const populatedFeedback = await Feedback.findById(newFeedback._id).populate('user', 'name email phone');
+        
+        // Notify admin about new feedback
+        const adminMessage = `🔔 NEW FEEDBACK RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 FROM:
+   Name: ${userName}
+   Email: ${userEmail}
+
+📝 FEEDBACK DETAILS:
+   Subject: ${subject}
+   Rating: ${'⭐'.repeat(rating)} (${rating}/5)
+   
+   Message:
+   ${message}
+
+📊 STATUS: Pending Review
+   Feedback ID: ${populatedFeedback._id}
+   
+⚡ ACTION REQUIRED:
+   Please review in the admin dashboard
+   Go to: Feedback → Review
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+        
+        await sendNotification(ADMIN_PHONE, adminMessage, 'ADMIN ALERT - NEW FEEDBACK');
+        
+        res.status(201).json(populatedFeedback);
+    } catch (err) {
+        res.status(400).json({ message: 'Error submitting feedback: ' + err.message });
+    }
+});
+
+// Toggle feedback resolved status
+app.put('/api/feedback/:id/resolve', async (req, res) => {
+    try {
+        const feedback = await Feedback.findById(req.params.id).populate('user', 'name email phone');
+        if (!feedback) return res.status(404).json({ message: 'Feedback not found.' });
+        
+        const wasResolved = feedback.isResolved;
+        feedback.isResolved = !feedback.isResolved;
+        await feedback.save();
+        
+        // If feedback was just marked as resolved, send notification to user
+        if (!wasResolved && feedback.isResolved) {
+            const userPhone = feedback.user.phone;
+            const userName = feedback.userName;
+            const subject = feedback.subject;
+            
+            const userMessage = `✅ FEEDBACK RESOLVED - HotelMaster
+
+Hello ${userName}! 🎉
+
+Thank you for your valuable feedback! We're pleased to inform you that your feedback has been reviewed and resolved by our team.
+
+📝 FEEDBACK DETAILS:
+   Subject: ${subject}
+   Rating: ${'⭐'.repeat(feedback.rating)} (${feedback.rating}/5)
+   Status: ✅ Resolved
+
+We truly appreciate you taking the time to share your thoughts with us. Your feedback helps us improve our services.
+
+🙏 Thank you for choosing HotelMaster!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HotelMaster Team 🏨`;
+            
+            await sendNotification(userPhone, userMessage, 'FEEDBACK RESOLVED');
+        }
+        
+        const populatedFeedback = await Feedback.findById(feedback._id).populate('user', 'name email phone');
+        res.json(populatedFeedback);
+    } catch (err) {
+        res.status(400).json({ message: 'Error updating feedback: ' + err.message });
+    }
+});
+
+// Delete feedback
+app.delete('/api/feedback/:id', async (req, res) => {
+    try {
+        const deletedFeedback = await Feedback.findByIdAndDelete(req.params.id);
+        if (!deletedFeedback) return res.status(404).json({ message: 'Feedback not found.' });
+        res.json({ message: 'Feedback deleted successfully.' });
+    } catch (err) {
+        res.status(400).json({ message: 'Error deleting feedback: ' + err.message });
+    }
+});
+
+// --- Notification Center Routes ---
+
+// Get all users for notification center
+app.get('/api/users', async (req, res) => {
+    try {
+        const users = await User.find().select('name email phone');
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching users: ' + err.message });
+    }
+});
+
+// Get all sent notifications (for admin)
+app.get('/api/notifications/custom', async (req, res) => {
+    try {
+        const notifications = await CustomNotification.find()
+            .populate('recipients', 'name email phone')
+            .sort({ createdAt: -1 });
+        res.json(notifications);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching notifications: ' + err.message });
+    }
+});
+
+// Get notifications for a specific user
+app.get('/api/notifications/user/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        
+        // Get notifications sent to all users OR specifically to this user
+        const notifications = await CustomNotification.find({
+            $or: [
+                { recipientType: 'all' },
+                { recipientType: 'specific', recipients: userId }
+            ]
+        }).sort({ createdAt: -1 });
+        
+        res.json(notifications);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching user notifications: ' + err.message });
+    }
+});
+
+// Send custom notification
+app.post('/api/notifications/send', async (req, res) => {
+    const { recipientType, recipients, subject, message } = req.body;
+    try {
+        if (!subject || !message) {
+            return res.status(400).json({ message: 'Subject and message are required.' });
+        }
+
+        // Save notification to database
+        const notification = new CustomNotification({
+            recipientType,
+            recipients: recipientType === 'specific' ? recipients : [],
+            subject,
+            message,
+            sentBy: 'Admin'
+        });
+        await notification.save();
+
+        // Get user details for sending notifications
+        let users = [];
+        if (recipientType === 'all') {
+            users = await User.find().select('name email phone');
+        } else if (recipientType === 'specific' && recipients && recipients.length > 0) {
+            users = await User.find({ _id: { $in: recipients } }).select('name email phone');
+        }
+
+        // Send notifications to all recipients
+        const notificationPromises = users.map(async (user) => {
+            const personalizedMessage = `📢 NOTIFICATION FROM HOTELMASTER
+
+Hello ${user.name}! 👋
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 ${subject}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${message}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Thank you for being a valued guest at HotelMaster! 🏨
+
+Best regards,
+HotelMaster Team`;
+
+            return sendNotification(user.phone, personalizedMessage, 'ADMIN NOTIFICATION');
+        });
+
+        await Promise.all(notificationPromises);
+
+        const populatedNotification = await CustomNotification.findById(notification._id)
+            .populate('recipients', 'name email phone');
+
+        res.status(201).json({
+            message: `Notification sent to ${users.length} user(s) successfully!`,
+            notification: populatedNotification
+        });
+    } catch (err) {
+        res.status(400).json({ message: 'Error sending notification: ' + err.message });
+    }
+});
+
+// Delete custom notification
+app.delete('/api/notifications/custom/:id', async (req, res) => {
+    try {
+        const deletedNotification = await CustomNotification.findByIdAndDelete(req.params.id);
+        if (!deletedNotification) return res.status(404).json({ message: 'Notification not found.' });
+        res.json({ message: 'Notification deleted successfully.' });
+    } catch (err) {
+        res.status(400).json({ message: 'Error deleting notification: ' + err.message });
+    }
+});
+
+// --- Credit System Routes ---
+
+// Get user credits
+app.get('/api/credits/user/:userId', async (req, res) => {
+    try {
+        let credit = await Credit.findOne({ user: req.params.userId });
+        if (!credit) {
+            credit = new Credit({ user: req.params.userId });
+            await credit.save();
+        }
+        
+        // Ensure proper number conversion for response
+        const creditResponse = {
+            ...credit.toObject(),
+            points: Number(credit.points) || 0,
+            totalEarned: Number(credit.totalEarned) || 0,
+            totalRedeemed: Number(credit.totalRedeemed) || 0
+        };
+        
+        res.json(creditResponse);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching credits: ' + err.message });
+    }
+});
+
+// Get user credit transactions
+app.get('/api/credits/user/:userId/transactions', async (req, res) => {
+    try {
+        const transactions = await CreditTransaction.find({ user: req.params.userId })
+            .populate('booking', 'guestName checkInDate checkOutDate')
+            .populate('offer', 'title pointsRequired')
+            .sort({ createdAt: -1 });
+        res.json(transactions);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching transactions: ' + err.message });
+    }
+});
+
+// Get all offers
+app.get('/api/offers', async (req, res) => {
+    try {
+        const offers = await Offer.find({ isActive: true }).sort({ pointsRequired: 1 });
+        res.json(offers);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching offers: ' + err.message });
+    }
+});
+
+// Redeem offer
+app.post('/api/credits/redeem', async (req, res) => {
+    const { userId, offerId } = req.body;
+    try {
+        const offer = await Offer.findById(offerId);
+        if (!offer || !offer.isActive) {
+            return res.status(400).json({ message: 'Offer not found or inactive.' });
+        }
+
+        let userCredit = await Credit.findOne({ user: userId });
+        if (!userCredit) {
+            userCredit = new Credit({ user: userId });
+            await userCredit.save();
+        }
+
+        if (userCredit.points < offer.pointsRequired) {
+            return res.status(400).json({ message: 'Insufficient credits.' });
+        }
+
+        // Update credit with proper number conversion
+        userCredit.points = (Number(userCredit.points) || 0) - Number(offer.pointsRequired);
+        userCredit.totalRedeemed = (Number(userCredit.totalRedeemed) || 0) + Number(offer.pointsRequired);
+        userCredit.lastUpdated = new Date();
+        await userCredit.save();
+
+        // Create transaction
+        const transaction = new CreditTransaction({
+            user: userId,
+            type: 'redeemed',
+            points: -offer.pointsRequired,
+            description: `Redeemed: ${offer.title}`,
+            offer: offerId
+        });
+        await transaction.save();
+
+        res.json({ 
+            message: 'Offer redeemed successfully!',
+            credit: userCredit,
+            transaction: transaction
+        });
+    } catch (err) {
+        res.status(400).json({ message: 'Error redeeming offer: ' + err.message });
+    }
+});
+
+// Admin: Get all credits
+app.get('/api/credits', async (req, res) => {
+    try {
+        const credits = await Credit.find()
+            .populate('user', 'name email phone')
+            .sort({ points: -1 });
+        res.json(credits);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching credits: ' + err.message });
+    }
+});
+
+// Admin: Create offer
+app.post('/api/offers', async (req, res) => {
+    const { title, description, pointsRequired, discountType, discountValue, validUntil } = req.body;
+    try {
+        const offer = new Offer({
+            title,
+            description,
+            pointsRequired,
+            discountType,
+            discountValue,
+            validUntil: validUntil ? new Date(validUntil) : null
+        });
+        await offer.save();
+        res.status(201).json(offer);
+    } catch (err) {
+        res.status(400).json({ message: 'Error creating offer: ' + err.message });
+    }
+});
+
+// Admin: Update offer
+app.put('/api/offers/:id', async (req, res) => {
+    const { title, description, pointsRequired, discountType, discountValue, isActive, validUntil } = req.body;
+    try {
+        const offer = await Offer.findByIdAndUpdate(req.params.id, {
+            title,
+            description,
+            pointsRequired,
+            discountType,
+            discountValue,
+            isActive,
+            validUntil: validUntil ? new Date(validUntil) : null
+        }, { new: true });
+        if (!offer) return res.status(404).json({ message: 'Offer not found.' });
+        res.json(offer);
+    } catch (err) {
+        res.status(400).json({ message: 'Error updating offer: ' + err.message });
+    }
+});
+
+// Admin: Delete offer
+app.delete('/api/offers/:id', async (req, res) => {
+    try {
+        const deletedOffer = await Offer.findByIdAndDelete(req.params.id);
+        if (!deletedOffer) return res.status(404).json({ message: 'Offer not found.' });
+        res.json({ message: 'Offer deleted successfully.' });
+    } catch (err) {
+        res.status(400).json({ message: 'Error deleting offer: ' + err.message });
+    }
+});
+
+// Admin: Add bonus credits
+app.post('/api/credits/bonus', async (req, res) => {
+    const { userId, points, description } = req.body;
+    try {
+        let userCredit = await Credit.findOne({ user: userId });
+        if (!userCredit) {
+            userCredit = new Credit({ user: userId });
+        }
+
+        // Ensure proper number conversion
+        userCredit.points = (Number(userCredit.points) || 0) + Number(points);
+        userCredit.totalEarned = (Number(userCredit.totalEarned) || 0) + Number(points);
+        userCredit.lastUpdated = new Date();
+        await userCredit.save();
+
+        const transaction = new CreditTransaction({
+            user: userId,
+            type: 'bonus',
+            points: points,
+            description: description || 'Admin bonus credits'
+        });
+        await transaction.save();
+
+        res.json({ 
+            message: 'Bonus credits added successfully!',
+            credit: userCredit
+        });
+    } catch (err) {
+        res.status(400).json({ message: 'Error adding bonus credits: ' + err.message });
+    }
+});
+
+// Initialize sample offers (run once)
+app.post('/api/offers/initialize', async (req, res) => {
+    try {
+        // Check if offers already exist
+        const existingOffers = await Offer.countDocuments();
+        if (existingOffers > 0) {
+            return res.json({ message: 'Sample offers already exist.' });
+        }
+
+        const sampleOffers = [
+            {
+                title: '10% Off Next Booking',
+                description: 'Get 10% discount on your next room booking',
+                pointsRequired: 50,
+                discountType: 'percentage',
+                discountValue: 10,
+                isActive: true
+            },
+            {
+                title: '20% Off Next Booking',
+                description: 'Get 20% discount on your next room booking',
+                pointsRequired: 100,
+                discountType: 'percentage',
+                discountValue: 20,
+                isActive: true
+            },
+            {
+                title: '₹500 Off Next Booking',
+                description: 'Get ₹500 discount on your next room booking',
+                pointsRequired: 75,
+                discountType: 'fixed',
+                discountValue: 500,
+                isActive: true
+            },
+            {
+                title: '₹1000 Off Next Booking',
+                description: 'Get ₹1000 discount on your next room booking',
+                pointsRequired: 150,
+                discountType: 'fixed',
+                discountValue: 1000,
+                isActive: true
+            },
+            {
+                title: 'Free WiFi Upgrade',
+                description: 'Complimentary WiFi upgrade for your stay',
+                pointsRequired: 25,
+                discountType: 'fixed',
+                discountValue: 200,
+                isActive: true
+            }
+        ];
+
+        await Offer.insertMany(sampleOffers);
+        res.json({ message: 'Sample offers created successfully!', count: sampleOffers.length });
+    } catch (err) {
+        res.status(400).json({ message: 'Error creating sample offers: ' + err.message });
+    }
+});
+
+// Fix existing credit data (migration)
+app.post('/api/credits/fix-data', async (req, res) => {
+    try {
+        const credits = await Credit.find({});
+        let fixedCount = 0;
+        
+        for (let credit of credits) {
+            let needsUpdate = false;
+            const updates = {};
+            
+            // Always fix points to ensure they're numbers
+            const currentPoints = Number(credit.points) || 0;
+            if (credit.points !== currentPoints) {
+                updates.points = currentPoints;
+                needsUpdate = true;
+            }
+            
+            // Always fix totalEarned to ensure they're numbers
+            const currentTotalEarned = Number(credit.totalEarned) || 0;
+            if (credit.totalEarned !== currentTotalEarned) {
+                updates.totalEarned = currentTotalEarned;
+                needsUpdate = true;
+            }
+            
+            // Always fix totalRedeemed to ensure they're numbers
+            const currentTotalRedeemed = Number(credit.totalRedeemed) || 0;
+            if (credit.totalRedeemed !== currentTotalRedeemed) {
+                updates.totalRedeemed = currentTotalRedeemed;
+                needsUpdate = true;
+            }
+            
+            if (needsUpdate) {
+                await Credit.findByIdAndUpdate(credit._id, updates);
+                fixedCount++;
+            }
+        }
+        
+        res.json({ 
+            message: `Fixed ${fixedCount} credit records. All credits are now properly stored as numbers.`,
+            fixedCount 
+        });
+    } catch (err) {
+        res.status(400).json({ message: 'Error fixing credit data: ' + err.message });
+    }
+});
+
+// Test endpoint to add sample credits
+app.post('/api/credits/test-add', async (req, res) => {
+    try {
+        const { userId, points } = req.body;
+        
+        let userCredit = await Credit.findOne({ user: userId });
+        if (!userCredit) {
+            userCredit = new Credit({ user: userId });
+        }
+        
+        // Add test credits
+        userCredit.points = (Number(userCredit.points) || 0) + (points || 20);
+        userCredit.totalEarned = (Number(userCredit.totalEarned) || 0) + (points || 20);
+        userCredit.lastUpdated = new Date();
+        await userCredit.save();
+        
+        res.json({ 
+            message: `Added ${points || 20} test credits successfully!`,
+            credit: userCredit
+        });
+    } catch (err) {
+        res.status(400).json({ message: 'Error adding test credits: ' + err.message });
+    }
+});
+
+// Fix specific user's credit data
+app.post('/api/credits/fix-user/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { points, totalEarned, totalRedeemed } = req.body;
+        
+        let userCredit = await Credit.findOne({ user: userId });
+        if (!userCredit) {
+            return res.status(404).json({ message: 'User credit record not found.' });
+        }
+        
+        // Update with specific values
+        if (points !== undefined) userCredit.points = Number(points);
+        if (totalEarned !== undefined) userCredit.totalEarned = Number(totalEarned);
+        if (totalRedeemed !== undefined) userCredit.totalRedeemed = Number(totalRedeemed);
+        
+        userCredit.lastUpdated = new Date();
+        await userCredit.save();
+        
+        res.json({ 
+            message: 'User credit data fixed successfully!',
+            credit: userCredit
+        });
+    } catch (err) {
+        res.status(400).json({ message: 'Error fixing user credit data: ' + err.message });
     }
 });
 

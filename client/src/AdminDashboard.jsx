@@ -4,6 +4,9 @@ import Navbar from './Navbar.jsx';
 import Rooms from './Rooms.jsx';
 import Bookings from './Bookings.jsx';
 import BookingRequests from './BookingRequests.jsx';
+import AdminFeedback from './AdminFeedback.jsx';
+import NotificationCenter from './NotificationCenter.jsx';
+import AdminCredits from './AdminCredits.jsx';
 
 // --- API Configuration ---
 const API_URL = 'http://localhost:3000/api';
@@ -244,6 +247,12 @@ export default function AdminDashboard({ onLogout }) {
                 return <BookingRequests />;
             case 'bookings':
                  return <Bookings />;
+            case 'credits':
+                return <AdminCredits />;
+            case 'feedback':
+                return <AdminFeedback />;
+            case 'notifications':
+                return <NotificationCenter />;
             case 'dashboard':
             default:
                 return <DashboardSummary />;

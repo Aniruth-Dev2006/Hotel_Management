@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Feedback from './Feedback.jsx';
+import UserNotifications from './UserNotifications.jsx';
+import UserCredits from './UserCredits.jsx';
 
 // --- API Configuration ---
 const API_URL = 'http://localhost:3000/api';
@@ -398,6 +401,226 @@ const UserDashboardStyles = () => (
             display: flex;
             justify-content: flex-end;
             gap: 0.75rem;
+        }
+        
+        /* Credit Offers Section */
+        .credit-offers-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .credit-offers-section h3 {
+            margin: 0 0 1.5rem 0;
+            color: #1e293b;
+            font-size: 1.25rem;
+        }
+        
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .offer-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .offer-card:hover {
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+        }
+        
+        .offer-card.selected {
+            border-color: #4f46e5;
+            background: #f0f4ff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .offer-card.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: #4f46e5;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+        
+        .offer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+        
+        .offer-header h4 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .offer-cost {
+            background: #4f46e5;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .offer-description {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin: 0 0 1rem 0;
+            line-height: 1.5;
+        }
+        
+        .offer-savings {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .savings-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        
+        .savings-amount {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .offer-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .total-label {
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .total-amount {
+            color: #1e293b;
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+        
+        .selected-offer-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .selected-offer-info p {
+            margin: 0.25rem 0;
+            color: #166534;
+            font-size: 0.875rem;
+        }
+        
+        .offer-preview {
+            padding: 1rem 0;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .preview-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-style: italic;
+        }
+        
+        .no-offers-message {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        .no-offers-message p {
+            margin: 0.5rem 0;
+        }
+        
+        /* Booking Summary */
+        .booking-summary {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .booking-summary h4 {
+            margin: 0 0 1rem 0;
+            color: #1e293b;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-row.discount {
+            color: #10b981;
+        }
+        
+        .summary-row.total {
+            background: #f0f4ff;
+            margin: 0.5rem -1.5rem -1.5rem -1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+            border-top: 2px solid #4f46e5;
+        }
+        
+        .summary-row span:first-child {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        
+        .summary-row span:last-child {
+            color: #1e293b;
+            font-weight: 500;
+        }
+        
+        .summary-row.total span:last-child {
+            color: #4f46e5;
+            font-size: 1.125rem;
         }
         .btn {
             padding: 0.75rem 1.5rem;
@@ -1066,7 +1289,7 @@ const UserDashboardStyles = () => (
 );
 
 export default function UserDashboard({ onLogout, userData }) {
-    const [activeView, setActiveView] = useState('rooms'); // 'rooms', 'bookings', 'profile'
+    const [activeView, setActiveView] = useState('rooms'); // 'rooms', 'bookings', 'profile', 'feedback', 'notifications', 'credits'
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [rooms, setRooms] = useState([]);
     const [filteredRooms, setFilteredRooms] = useState([]);
@@ -1079,6 +1302,9 @@ export default function UserDashboard({ onLogout, userData }) {
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState(null);
     const [showChatbot, setShowChatbot] = useState(false);
+    const [availableOffers, setAvailableOffers] = useState([]);
+    const [userCredits, setUserCredits] = useState({ points: 0 });
+    const [selectedOffer, setSelectedOffer] = useState(null);
     const [chatMessages, setChatMessages] = useState([
         { type: 'bot', text: 'Hello! 👋 I\'m your HotelMaster Bot assistant. I can help you with room bookings, availability, pricing, and any questions you have. How can I assist you today?' }
     ]);
@@ -1114,6 +1340,26 @@ export default function UserDashboard({ onLogout, userData }) {
         }
     };
 
+    // Fetch available offers
+    const fetchOffers = async () => {
+        try {
+            const response = await apiClient.get('/offers');
+            setAvailableOffers(response.data);
+        } catch (error) {
+            console.error('Failed to fetch offers:', error);
+        }
+    };
+
+    // Fetch user credits
+    const fetchUserCredits = async () => {
+        try {
+            const response = await apiClient.get(`/credits/user/${userData.id}`);
+            setUserCredits(response.data);
+        } catch (error) {
+            console.error('Failed to fetch credits:', error);
+        }
+    };
+
     // Fetch user's bookings only
     const fetchMyBookings = async () => {
         try {
@@ -1134,6 +1380,11 @@ export default function UserDashboard({ onLogout, userData }) {
             fetchMyBookings();
         }
     }, [activeView]);
+
+    useEffect(() => {
+        fetchOffers();
+        fetchUserCredits();
+    }, [userData.id]);
 
     // Apply filters
     const applyFilters = () => {
@@ -1184,7 +1435,8 @@ export default function UserDashboard({ onLogout, userData }) {
                 userId: userData.id,
                 checkInDate: bookingData.checkInDate,
                 checkOutDate: bookingData.checkOutDate,
-                status: 'Requested'
+                status: 'Requested',
+                redeemedOfferId: selectedOffer?._id || null
             });
             
             // Send WhatsApp notification to admin (9361377458)
@@ -1193,9 +1445,21 @@ export default function UserDashboard({ onLogout, userData }) {
             setShowBookingModal(false);
             setBookingData({ checkInDate: '', checkOutDate: '', guestName: userData?.name || '' });
             setSelectedRoom(null);
-            setSuccessMessage('Booking request submitted successfully!');
+            setSelectedOffer(null);
+            
+            // Update success message based on offer redemption
+            if (selectedOffer) {
+                setSuccessMessage(`Booking request submitted successfully! You redeemed "${selectedOffer.title}" and saved credits!`);
+            } else {
+                setSuccessMessage('Booking request submitted successfully!');
+            }
+            
             setShowSuccessPopup(true);
             setTimeout(() => setShowSuccessPopup(false), 4000);
+            
+            // Refresh credits and bookings
+            fetchUserCredits();
+            fetchMyBookings();
             fetchRooms(); // Refresh rooms
         } catch (error) {
             console.error('Booking failed:', error);
@@ -1593,6 +1857,15 @@ export default function UserDashboard({ onLogout, userData }) {
                         <button onClick={() => setActiveView('bookings')} className={`nav-link ${activeView === 'bookings' ? 'active' : ''}`}>
                             My Bookings
                         </button>
+                        <button onClick={() => setActiveView('credits')} className={`nav-link ${activeView === 'credits' ? 'active' : ''}`}>
+                            Credits
+                        </button>
+                        <button onClick={() => setActiveView('notifications')} className={`nav-link ${activeView === 'notifications' ? 'active' : ''}`}>
+                            Notifications
+                        </button>
+                        <button onClick={() => setActiveView('feedback')} className={`nav-link ${activeView === 'feedback' ? 'active' : ''}`}>
+                            Feedback
+                        </button>
                         <button onClick={() => setActiveView('profile')} className={`nav-link ${activeView === 'profile' ? 'active' : ''}`}>
                             Profile
                         </button>
@@ -1620,6 +1893,15 @@ export default function UserDashboard({ onLogout, userData }) {
                         <button onClick={() => handleNavigation('bookings')} className={`nav-link ${activeView === 'bookings' ? 'active' : ''}`}>
                             My Bookings
                         </button>
+                        <button onClick={() => handleNavigation('credits')} className={`nav-link ${activeView === 'credits' ? 'active' : ''}`}>
+                            Credits
+                        </button>
+                        <button onClick={() => handleNavigation('notifications')} className={`nav-link ${activeView === 'notifications' ? 'active' : ''}`}>
+                            Notifications
+                        </button>
+                        <button onClick={() => handleNavigation('feedback')} className={`nav-link ${activeView === 'feedback' ? 'active' : ''}`}>
+                            Feedback
+                        </button>
                         <button onClick={() => handleNavigation('profile')} className={`nav-link ${activeView === 'profile' ? 'active' : ''}`}>
                             Profile
                         </button>
@@ -1631,6 +1913,9 @@ export default function UserDashboard({ onLogout, userData }) {
                 <div className="user-main-content">
                     {activeView === 'rooms' && renderRoomsView()}
                     {activeView === 'bookings' && renderBookingsView()}
+                    {activeView === 'credits' && <UserCredits userData={userData} />}
+                    {activeView === 'notifications' && <UserNotifications userData={userData} />}
+                    {activeView === 'feedback' && <Feedback userData={userData} />}
                     {activeView === 'profile' && renderProfileView()}
                 </div>
                 
@@ -1678,8 +1963,111 @@ export default function UserDashboard({ onLogout, userData }) {
                                 </div>
                                 
                                 {!selectedRoom.isBooked && (
-                                    <form className="booking-form" onSubmit={handleBookRoom}>
-                                        <h3>Booking Information</h3>
+                                    <>
+                                        {/* Credit Offers Section */}
+                                        {availableOffers.length > 0 ? (
+                                            <div className="credit-offers-section">
+                                                <h3>💎 Available Credit Offers</h3>
+                                                <div className="offers-grid">
+                                                    {availableOffers
+                                                        .filter(offer => (Number(userCredits.points) || 0) >= offer.pointsRequired)
+                                                        .map(offer => {
+                                                            // Check if dates are available for calculation
+                                                            const checkIn = new Date(bookingData.checkInDate);
+                                                            const checkOut = new Date(bookingData.checkOutDate);
+                                                            const hasValidDates = !isNaN(checkIn.getTime()) && !isNaN(checkOut.getTime());
+                                                            
+                                                            let nights = 0;
+                                                            let totalAmount = 0;
+                                                            let discountAmount = 0;
+                                                            let finalAmount = 0;
+                                                            
+                                                            if (hasValidDates) {
+                                                                nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                                                                totalAmount = selectedRoom.price * nights;
+                                                                discountAmount = offer.discountType === 'percentage' 
+                                                                    ? (totalAmount * offer.discountValue) / 100
+                                                                    : offer.discountValue;
+                                                                finalAmount = Math.max(0, totalAmount - discountAmount);
+                                                            }
+                                                            
+                                                            return (
+                                                                <div 
+                                                                    key={offer._id} 
+                                                                    className={`offer-card ${selectedOffer?._id === offer._id ? 'selected' : ''}`}
+                                                                    onClick={() => setSelectedOffer(selectedOffer?._id === offer._id ? null : offer)}
+                                                                >
+                                                                    <div className="offer-header">
+                                                                        <h4>{offer.title}</h4>
+                                                                        <span className="offer-cost">{offer.pointsRequired} pts</span>
+                                                                    </div>
+                                                                    <p className="offer-description">{offer.description}</p>
+                                                                    {hasValidDates ? (
+                                                                        <>
+                                                                            <div className="offer-savings">
+                                                                                <span className="savings-label">You Save:</span>
+                                                                                <span className="savings-amount">₹{discountAmount}</span>
+                                                                            </div>
+                                                                            <div className="offer-total">
+                                                                                <span className="total-label">Final Amount:</span>
+                                                                                <span className="total-amount">₹{finalAmount}</span>
+                                                                            </div>
+                                                                        </>
+                                                                    ) : (
+                                                                        <div className="offer-preview">
+                                                                            <span className="preview-label">Select dates to see savings</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                </div>
+                                                {availableOffers.filter(offer => (Number(userCredits.points) || 0) >= offer.pointsRequired).length === 0 && (
+                                                    <div className="no-offers-message">
+                                                        <p>You need more credits to use these offers.</p>
+                                                        <p>Current credits: {Number(userCredits.points) || 0}</p>
+                                                    </div>
+                                                )}
+                                                {selectedOffer && (() => {
+                                                    const checkIn = new Date(bookingData.checkInDate);
+                                                    const checkOut = new Date(bookingData.checkOutDate);
+                                                    const hasValidDates = !isNaN(checkIn.getTime()) && !isNaN(checkOut.getTime());
+                                                    
+                                                    if (hasValidDates) {
+                                                        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                                                        const totalAmount = selectedRoom.price * nights;
+                                                        const savings = selectedOffer.discountType === 'percentage' 
+                                                            ? Math.round((totalAmount * selectedOffer.discountValue) / 100)
+                                                            : selectedOffer.discountValue;
+                                                        
+                                                        return (
+                                                            <div className="selected-offer-info">
+                                                                <p>✅ Selected: {selectedOffer.title}</p>
+                                                                <p>You will save ₹{savings} on this booking!</p>
+                                                            </div>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <div className="selected-offer-info">
+                                                                <p>✅ Selected: {selectedOffer.title}</p>
+                                                                <p>Select check-in and check-out dates to see your savings!</p>
+                                                            </div>
+                                                        );
+                                                    }
+                                                })()}
+                                            </div>
+                                        ) : (
+                                            <div className="credit-offers-section">
+                                                <h3>💎 Credit Offers</h3>
+                                                <div className="no-offers-message">
+                                                    <p>No offers available at the moment.</p>
+                                                    <p>Check back later for new offers!</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        <form className="booking-form" onSubmit={handleBookRoom}>
+                                            <h3>Booking Information</h3>
                                         <div className="input-group">
                                             <label>Guest Name</label>
                                             <input 
@@ -1709,6 +2097,58 @@ export default function UserDashboard({ onLogout, userData }) {
                                                 onChange={(e) => setBookingData({...bookingData, checkOutDate: e.target.value})}
                                             />
                                         </div>
+                                        
+                                        {/* Booking Summary */}
+                                        {bookingData.checkInDate && bookingData.checkOutDate && (
+                                            <div className="booking-summary">
+                                                <h4>💰 Booking Summary</h4>
+                                                {(() => {
+                                                    const checkIn = new Date(bookingData.checkInDate);
+                                                    const checkOut = new Date(bookingData.checkOutDate);
+                                                    
+                                                    // Validate dates
+                                                    if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+                                                        return <p>Please select valid dates</p>;
+                                                    }
+                                                    
+                                                    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                                                    const totalAmount = selectedRoom.price * nights;
+                                                    
+                                                    return (
+                                                        <>
+                                                            <div className="summary-row">
+                                                                <span>Room Price per Night:</span>
+                                                                <span>₹{selectedRoom.price}</span>
+                                                            </div>
+                                                            <div className="summary-row">
+                                                                <span>Number of Nights:</span>
+                                                                <span>{nights}</span>
+                                                            </div>
+                                                            <div className="summary-row">
+                                                                <span>Total Amount:</span>
+                                                                <span>₹{totalAmount}</span>
+                                                            </div>
+                                                            {selectedOffer && (
+                                                                <>
+                                                                    <div className="summary-row discount">
+                                                                        <span>Discount ({selectedOffer.title}):</span>
+                                                                        <span>-₹{selectedOffer.discountType === 'percentage' 
+                                                                            ? Math.round((totalAmount * selectedOffer.discountValue) / 100)
+                                                                            : selectedOffer.discountValue}</span>
+                                                                    </div>
+                                                                    <div className="summary-row total">
+                                                                        <span><strong>Final Amount:</strong></span>
+                                                                        <span><strong>₹{Math.max(0, totalAmount - (selectedOffer.discountType === 'percentage' 
+                                                                            ? Math.round((totalAmount * selectedOffer.discountValue) / 100)
+                                                                            : selectedOffer.discountValue))}</strong></span>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
+                                        )}
                                         <div className="modal-footer">
                                             <button type="button" className="btn btn-secondary" onClick={() => {
                                                 setShowBookingModal(false);
@@ -1717,6 +2157,7 @@ export default function UserDashboard({ onLogout, userData }) {
                                             <button type="submit" className="btn btn-primary">Confirm Booking</button>
                                         </div>
                                     </form>
+                                    </>
                                 )}
                             </div>
                         </div>

@@ -166,6 +166,9 @@ export default function Navbar({ onLogout, onNavigate, activeView }) {
                     <button onClick={() => onNavigate('rooms')} className={`nav-link ${activeView === 'rooms' ? 'active' : ''}`}>Rooms</button>
                     <button onClick={() => onNavigate('requests')} className={`nav-link ${activeView === 'requests' ? 'active' : ''}`}>Booking Requests</button>
                     <button onClick={() => onNavigate('bookings')} className={`nav-link ${activeView === 'bookings' ? 'active' : ''}`}>Manage Bookings</button>
+                    <button onClick={() => onNavigate('credits')} className={`nav-link ${activeView === 'credits' ? 'active' : ''}`}>Credits</button>
+                    <button onClick={() => onNavigate('feedback')} className={`nav-link ${activeView === 'feedback' ? 'active' : ''}`}>Feedback</button>
+                    <button onClick={() => onNavigate('notifications')} className={`nav-link ${activeView === 'notifications' ? 'active' : ''}`}>Notifications</button>
                     <button onClick={onLogout} className="logout-button-nav">Logout</button>
                 </div>
                 
@@ -184,6 +187,9 @@ export default function Navbar({ onLogout, onNavigate, activeView }) {
                     <button onClick={() => handleNavigation('rooms')} className={`nav-link ${activeView === 'rooms' ? 'active' : ''}`}>Rooms</button>
                     <button onClick={() => handleNavigation('requests')} className={`nav-link ${activeView === 'requests' ? 'active' : ''}`}>Booking Requests</button>
                     <button onClick={() => handleNavigation('bookings')} className={`nav-link ${activeView === 'bookings' ? 'active' : ''}`}>Manage Bookings</button>
+                    <button onClick={() => handleNavigation('credits')} className={`nav-link ${activeView === 'credits' ? 'active' : ''}`}>Credits</button>
+                    <button onClick={() => handleNavigation('feedback')} className={`nav-link ${activeView === 'feedback' ? 'active' : ''}`}>Feedback</button>
+                    <button onClick={() => handleNavigation('notifications')} className={`nav-link ${activeView === 'notifications' ? 'active' : ''}`}>Notifications</button>
                     <button onClick={onLogout} className="logout-button-nav">Logout</button>
                 </div>
             </nav>

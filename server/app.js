@@ -68,7 +68,6 @@ if (!fs.existsSync(NOTIFICATIONS_DIR)) {
     fs.mkdirSync(NOTIFICATIONS_DIR, { recursive: true });
 }
 
-
 const CALLMEBOT_API_KEY = process.env.CALLMEBOT_API_KEY || 'YOUR_API_KEY_HERE';
 
 let whatsappEnabled = false;
@@ -543,7 +542,13 @@ app.post('/api/rooms/check-availability', async (req, res) => {
             });
         }
         
-        if (checkIn < new Date()) {
+        // Compare only dates, not time (allow booking for today)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkInDateOnly = new Date(checkIn);
+        checkInDateOnly.setHours(0, 0, 0, 0);
+        
+        if (checkInDateOnly < today) {
             return res.status(400).json({ 
                 available: false, 
                 message: 'Check-in date cannot be in the past.' 
@@ -572,15 +577,39 @@ app.post('/api/rooms/check-availability', async (req, res) => {
         const conflictingBookings = await Booking.find(query).populate('user', 'name email');
         
         if (conflictingBookings.length > 0) {
-            return res.json({ 
-                available: false, 
-                message: 'Room is not available for the selected dates.',
-                conflicts: conflictingBookings.map(b => ({
+            // Calculate days pending for requested bookings
+            const conflictDetails = conflictingBookings.map(b => {
+                const daysPending = b.status === 'Requested' 
+                    ? Math.floor((new Date() - b.createdAt) / (1000 * 60 * 60 * 24))
+                    : null;
+                
+                return {
                     checkIn: b.checkInDate,
                     checkOut: b.checkOutDate,
                     status: b.status,
-                    guestName: b.guestName
-                }))
+                    guestName: b.guestName,
+                    daysPending: daysPending,
+                    isPending: b.status === 'Requested'
+                };
+            });
+            
+            // Check if conflicts are only pending requests
+            const allPending = conflictDetails.every(c => c.isPending);
+            const oldPending = conflictDetails.filter(c => c.isPending && c.daysPending > 3);
+            
+            let message = 'Room is not available for the selected dates.';
+            if (allPending && oldPending.length > 0) {
+                message = `This room has ${oldPending.length} pending booking request(s) that are ${oldPending[0].daysPending} days old. Please contact admin or try again later.`;
+            } else if (allPending) {
+                message = 'This room has pending booking requests for these dates. Please try different dates or contact admin.';
+            }
+            
+            return res.json({ 
+                available: false, 
+                message: message,
+                conflicts: conflictDetails,
+                hasPendingRequests: allPending,
+                hasOldPendingRequests: oldPending.length > 0
             });
         }
         
@@ -589,6 +618,7 @@ app.post('/api/rooms/check-availability', async (req, res) => {
             message: 'Room is available for the selected dates.' 
         });
     } catch (err) {
+        console.error('❌ Availability check error:', err);
         res.status(500).json({ 
             available: false, 
             message: 'Error checking availability: ' + err.message 
@@ -816,6 +846,126 @@ app.get('/api/bookings', async (req, res) => {
     }
 });
 
+// Clean up old/stale booking requests (Admin utility endpoint)
+app.post('/api/bookings/cleanup-old-requests', async (req, res) => {
+    try {
+        const { daysOld = 7 } = req.body;
+        
+        // Calculate the cutoff date
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+        
+        // Find old requests
+        const oldRequests = await Booking.find({
+            status: 'Requested',
+            createdAt: { $lt: cutoffDate }
+        }).populate('room', 'roomNumber').populate('user', 'name email phone');
+        
+        if (oldRequests.length === 0) {
+            return res.json({ 
+                message: 'No old booking requests found.',
+                cleaned: 0
+            });
+        }
+        
+        // Update them to Rejected status
+        const result = await Booking.updateMany(
+            {
+                status: 'Requested',
+                createdAt: { $lt: cutoffDate }
+            },
+            {
+                status: 'Rejected'
+            }
+        );
+        
+        // Notify affected users
+        for (const booking of oldRequests) {
+            try {
+                const userPhone = booking.user?.phone;
+                const guestName = booking.guestName;
+                const roomNumber = booking.room?.roomNumber;
+                
+                if (userPhone) {
+                    const message = `🏨 BOOKING REQUEST AUTO-CANCELLED
+
+Hello ${guestName},
+
+Your booking request for Room ${roomNumber} has been automatically cancelled as it was pending for more than ${daysOld} days.
+
+📅 Dates: ${new Date(booking.checkInDate).toLocaleDateString('en-IN')} - ${new Date(booking.checkOutDate).toLocaleDateString('en-IN')}
+
+Please feel free to make a new booking request if you're still interested.
+
+HotelMaster Team`;
+                    
+                    await sendNotification(userPhone, message, 'BOOKING AUTO-CANCELLED');
+                }
+            } catch (notifError) {
+                console.error('Failed to notify user about auto-cancellation:', notifError);
+            }
+        }
+        
+        res.json({ 
+            message: `Successfully cleaned up ${result.modifiedCount} old booking request(s).`,
+            cleaned: result.modifiedCount,
+            details: oldRequests.map(b => ({
+                id: b._id,
+                guestName: b.guestName,
+                room: b.room?.roomNumber,
+                createdAt: b.createdAt,
+                checkInDate: b.checkInDate
+            }))
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error cleaning up old requests: ' + err.message });
+    }
+});
+
+// Get detailed information about conflicting bookings for a specific date range
+app.post('/api/bookings/conflicts', async (req, res) => {
+    try {
+        const { roomId, checkInDate, checkOutDate } = req.body;
+        
+        if (!roomId || !checkInDate || !checkOutDate) {
+            return res.status(400).json({ 
+                message: 'Room ID, check-in date, and check-out date are required.' 
+            });
+        }
+        
+        const checkIn = new Date(checkInDate);
+        const checkOut = new Date(checkOutDate);
+        
+        // Find all overlapping bookings
+        const conflictingBookings = await Booking.find({
+            room: roomId,
+            status: { $in: ['Requested', 'Confirmed', 'Active'] },
+            $or: [
+                { checkInDate: { $lte: checkIn }, checkOutDate: { $gt: checkIn } },
+                { checkInDate: { $lt: checkOut }, checkOutDate: { $gte: checkOut } },
+                { checkInDate: { $gte: checkIn }, checkOutDate: { $lte: checkOut } }
+            ]
+        }).populate('user', 'name email phone').populate('room', 'roomNumber type');
+        
+        res.json({
+            hasConflicts: conflictingBookings.length > 0,
+            count: conflictingBookings.length,
+            conflicts: conflictingBookings.map(b => ({
+                id: b._id,
+                guestName: b.guestName,
+                status: b.status,
+                checkInDate: b.checkInDate,
+                checkOutDate: b.checkOutDate,
+                createdAt: b.createdAt,
+                userEmail: b.user?.email,
+                daysPending: b.status === 'Requested' ? Math.floor((new Date() - b.createdAt) / (1000 * 60 * 60 * 24)) : null
+            }))
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error checking conflicts: ' + err.message });
+    }
+});
+
 // UPDATED: New bookings are now 'Requested' by default and include user association
 app.post('/api/bookings/add', async (req, res) => {
     const { guestName, room, checkInDate, checkOutDate, userId, redeemedOfferId } = req.body;
@@ -832,7 +982,13 @@ app.post('/api/bookings/add', async (req, res) => {
             return res.status(400).json({ message: 'Check-out date must be after check-in date.' });
         }
         
-        if (checkIn < new Date()) {
+        // Compare only dates, not time (allow booking for today)
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
+        const checkInDateOnly = new Date(checkIn);
+        checkInDateOnly.setHours(0, 0, 0, 0);
+        
+        if (checkInDateOnly < todayDate) {
             return res.status(400).json({ message: 'Check-in date cannot be in the past.' });
         }
         
@@ -947,14 +1103,14 @@ app.post('/api/bookings/add', async (req, res) => {
             .populate('user', 'name email phone');
         
         // Update room's isBooked status based on today's date
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
         
         // Check if this new booking covers today
         const checkInDate_obj = new Date(checkInDate);
         const checkOutDate_obj = new Date(checkOutDate);
         
-        if (checkInDate_obj <= today && checkOutDate_obj > today) {
+        if (checkInDate_obj <= currentDate && checkOutDate_obj > currentDate) {
             // Booking covers today, mark room as booked
             await Room.findByIdAndUpdate(room, { isBooked: true });
         } else {
@@ -962,8 +1118,8 @@ app.post('/api/bookings/add', async (req, res) => {
             const currentBookings = await Booking.find({
                 room: room,
                 status: { $in: ['Confirmed', 'Active'] },
-                checkInDate: { $lte: today },
-                checkOutDate: { $gt: today }
+                checkInDate: { $lte: currentDate },
+                checkOutDate: { $gt: currentDate }
             });
             await Room.findByIdAndUpdate(room, { 
                 isBooked: currentBookings.length > 0 

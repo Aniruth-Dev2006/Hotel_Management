@@ -28,6 +28,105 @@ const BookingRequestsStyles = () => (
         .btn-reject:hover { background-color: #dc2626; }
         .placeholder-text { text-align: center; padding: 2rem; color: #6b7280; font-size: 1rem; }
 
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .modal-icon {
+            font-size: 2.5rem;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+        .modal-body {
+            margin-bottom: 2rem;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+        .modal-btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .modal-btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        .success-box {
+            background: #dcfce7;
+            border: 2px solid #86efac;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .success-box h3 {
+            color: #15803d;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.125rem;
+        }
+        .success-box p {
+            color: #166534;
+            margin: 0;
+        }
+
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 768px) {
             .page-container {
@@ -54,6 +153,10 @@ const BookingRequestsStyles = () => (
 export default function BookingRequests() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [cleaningUp, setCleaningUp] = useState(false);
+    const [showCleanupModal, setShowCleanupModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [cleanupResult, setCleanupResult] = useState(null);
 
     const fetchRequests = async () => {
         setLoading(true);
@@ -81,14 +184,64 @@ export default function BookingRequests() {
         }
     };
 
+    const handleCleanupOldRequests = async () => {
+        setCleaningUp(true);
+        try {
+            const response = await apiClient.post('/bookings/cleanup-old-requests', { daysOld: 7 });
+            setCleanupResult(response.data);
+            setShowCleanupModal(false);
+            setShowSuccessModal(true);
+            fetchRequests(); // Refresh the list
+        } catch (error) {
+            console.error("Failed to cleanup old requests:", error);
+            alert('Error cleaning up old requests. Please try again.');
+        } finally {
+            setCleaningUp(false);
+        }
+    };
+
+    const calculateDaysPending = (createdAt) => {
+        const created = new Date(createdAt);
+        const now = new Date();
+        const diffTime = Math.abs(now - created);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
     if (loading) return <div className="page-container"><p className="placeholder-text">Loading requests...</p></div>;
 
     return (
         <>
             <BookingRequestsStyles />
             <div className="page-container">
-                <header className="page-header">
-                    <h1>Booking Requests</h1>
+                <header className="page-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
+                    <div>
+                        <h1>Booking Requests</h1>
+                        {requests.length > 0 && (
+                            <p style={{margin: '0.5rem 0 0 0', color: '#6b7280', fontSize: '0.875rem'}}>
+                                {requests.length} pending request{requests.length !== 1 ? 's' : ''}
+                            </p>
+                        )}
+                    </div>
+                    {requests.length > 0 && (
+                        <button 
+                            onClick={() => setShowCleanupModal(true)}
+                            disabled={cleaningUp}
+                            style={{
+                                backgroundColor: '#f59e0b',
+                                color: 'white',
+                                padding: '0.6rem 1.2rem',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                cursor: cleaningUp ? 'not-allowed' : 'pointer',
+                                fontWeight: '500',
+                                opacity: cleaningUp ? 0.6 : 1,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {cleaningUp ? '🔄 Cleaning...' : '🧹 Clean Up Old Requests (7+ days)'}
+                        </button>
+                    )}
                 </header>
                 <div className="data-section">
                     {/* CORRECTED: Conditionally render table OR placeholder text */}
@@ -100,32 +253,129 @@ export default function BookingRequests() {
                                     <th>Room</th>
                                     <th>Check-In</th>
                                     <th>Check-Out</th>
+                                    <th>Pending Days</th>
+                                    <th>Guest Email</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {requests.map(request => (
-                                    <tr key={request._id}>
-                                        <td>{request.guestName}</td>
-                                        <td>{request.room ? `Room ${request.room.roomNumber}` : 'N/A'}</td>
-                                        <td>{new Date(request.checkInDate).toLocaleDateString()}</td>
-                                        <td>{new Date(request.checkOutDate).toLocaleDateString()}</td>
-                                        <td className="action-cell">
-                                            <button onClick={() => handleRequestUpdate(request._id, 'Confirmed')} className="action-btn btn-accept">
-                                                Accept
-                                            </button>
-                                            <button onClick={() => handleRequestUpdate(request._id, 'Rejected')} className="action-btn btn-reject">
-                                                Reject
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {requests.map(request => {
+                                    const daysPending = calculateDaysPending(request.createdAt);
+                                    const isOld = daysPending > 3;
+                                    
+                                    return (
+                                        <tr key={request._id} style={isOld ? {backgroundColor: '#fef3c7'} : {}}>
+                                            <td>{request.guestName}</td>
+                                            <td>{request.room ? `Room ${request.room.roomNumber}` : 'N/A'}</td>
+                                            <td>{new Date(request.checkInDate).toLocaleDateString()}</td>
+                                            <td>{new Date(request.checkOutDate).toLocaleDateString()}</td>
+                                            <td>
+                                                <span style={{
+                                                    color: isOld ? '#dc2626' : '#059669',
+                                                    fontWeight: isOld ? '600' : '500'
+                                                }}>
+                                                    {daysPending} day{daysPending !== 1 ? 's' : ''}
+                                                    {isOld && ' ⚠️'}
+                                                </span>
+                                            </td>
+                                            <td style={{fontSize: '0.875rem', color: '#6b7280'}}>
+                                                {request.user?.email || 'N/A'}
+                                            </td>
+                                            <td className="action-cell">
+                                                <button onClick={() => handleRequestUpdate(request._id, 'Confirmed')} className="action-btn btn-accept">
+                                                    ✓ Accept
+                                                </button>
+                                                <button onClick={() => handleRequestUpdate(request._id, 'Rejected')} className="action-btn btn-reject">
+                                                    ✗ Reject
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     ) : (
-                        <p className="placeholder-text">No pending booking requests.</p>
+                        <p className="placeholder-text">✅ No pending booking requests. All caught up!</p>
                     )}
                 </div>
+
+                {/* Cleanup Confirmation Modal */}
+                {showCleanupModal && (
+                    <div className="modal-overlay" onClick={() => setShowCleanupModal(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <span className="modal-icon">🧹</span>
+                                <h2 className="modal-title">Clean Up Old Requests</h2>
+                            </div>
+                            <div className="modal-body">
+                                <p style={{marginBottom: '1rem'}}>
+                                    This will automatically <strong>reject all booking requests</strong> that are older than 7 days.
+                                </p>
+                                <p style={{
+                                    background: '#fef3c7',
+                                    padding: '1rem',
+                                    borderRadius: '0.5rem',
+                                    borderLeft: '4px solid #f59e0b',
+                                    margin: 0
+                                }}>
+                                    <strong>⚠️ Warning:</strong> This action cannot be undone. Affected users will be notified via the system.
+                                </p>
+                            </div>
+                            <div className="modal-footer">
+                                <button 
+                                    className="modal-btn modal-btn-secondary"
+                                    onClick={() => setShowCleanupModal(false)}
+                                    disabled={cleaningUp}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    className="modal-btn modal-btn-primary"
+                                    onClick={handleCleanupOldRequests}
+                                    disabled={cleaningUp}
+                                >
+                                    {cleaningUp ? '🔄 Processing...' : '✓ Yes, Clean Up'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Success Modal */}
+                {showSuccessModal && cleanupResult && (
+                    <div className="modal-overlay" onClick={() => setShowSuccessModal(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <span className="modal-icon">✅</span>
+                                <h2 className="modal-title">Cleanup Completed</h2>
+                            </div>
+                            <div className="modal-body">
+                                <div className="success-box">
+                                    <h3>✨ Successfully Cleaned Up</h3>
+                                    <p>
+                                        {cleanupResult.cleaned > 0 
+                                            ? `${cleanupResult.cleaned} old booking request${cleanupResult.cleaned !== 1 ? 's have' : ' has'} been rejected.`
+                                            : 'No old requests found. System is already clean!'
+                                        }
+                                    </p>
+                                </div>
+                                {cleanupResult.cleaned > 0 && (
+                                    <p style={{fontSize: '0.875rem', color: '#6b7280'}}>
+                                        Affected users have been notified. The booking list has been refreshed.
+                                    </p>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button 
+                                    className="modal-btn modal-btn-primary"
+                                    onClick={() => setShowSuccessModal(false)}
+                                >
+                                    Got it!
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

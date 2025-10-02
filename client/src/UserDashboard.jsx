@@ -746,6 +746,13 @@ const UserDashboardStyles = () => (
         .action-btn-cancel:hover {
             background: #dc2626;
         }
+        .action-btn-invoice {
+            background: #8b5cf6;
+            color: white;
+        }
+        .action-btn-invoice:hover {
+            background: #7c3aed;
+        }
         
         /* Profile Section */
         .profile-section {
@@ -1460,6 +1467,8 @@ export default function UserDashboard({ onLogout, userData }) {
                 redeemedOfferId: selectedOffer?._id || null
             });
             
+            const newBooking = response.data;
+            
             // Send WhatsApp notification to admin (9361377458)
             sendWhatsAppNotification();
             
@@ -1473,7 +1482,7 @@ export default function UserDashboard({ onLogout, userData }) {
             if (usedOffer) {
                 setSuccessMessage(`Booking request submitted successfully! You redeemed "${usedOffer.title}" and saved credits!`);
             } else {
-                setSuccessMessage('Booking request submitted successfully!');
+                setSuccessMessage('Booking request submitted successfully! Invoice will be available once admin confirms.');
             }
             
             setShowSuccessPopup(true);
@@ -1499,6 +1508,24 @@ export default function UserDashboard({ onLogout, userData }) {
         }
     };
 
+    // Download invoice PDF
+    const downloadInvoice = async (bookingId) => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/bookings/${bookingId}/invoice`);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `HotelMaster_Invoice_${bookingId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to download invoice:', error);
+        }
+    };
+
     // Send WhatsApp notification
     const sendWhatsAppNotification = () => {
         const adminPhone = '9361377458';
@@ -1510,22 +1537,57 @@ export default function UserDashboard({ onLogout, userData }) {
             day: 'numeric', month: 'long', year: 'numeric'
         });
         
+        // Calculate pricing breakdown
+        const checkInDate = new Date(bookingData.checkInDate);
+        const checkOutDate = new Date(bookingData.checkOutDate);
+        const numberOfNights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+        const roomPrice = selectedRoom.price;
+        const subtotal = roomPrice * numberOfNights;
+        
+        let discount = 0;
+        let finalAmount = subtotal;
+        let offerName = '';
+        
+        if (selectedOffer) {
+            offerName = selectedOffer.title;
+            if (selectedOffer.discountType === 'percentage') {
+                discount = Math.round((subtotal * selectedOffer.discountValue) / 100);
+            } else {
+                discount = selectedOffer.discountValue;
+            }
+            finalAmount = subtotal - discount;
+        }
+        
         let message = `🏨 *NEW BOOKING REQUEST - HotelMaster*\n\n`;
-        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `👤 *Guest Details:*\n`;
-        message += `Name: ${bookingData.guestName}\n`;
-        message += `Phone: ${userData.phone}\n`;
-        message += `Email: ${userData.email}\n\n`;
-        message += `🏨 *Booking Details:*\n`;
-        message += `Room Number: ${selectedRoom.roomNumber}\n`;
-        message += `Room Type: ${selectedRoom.type}\n`;
-        message += `Price: ₹${selectedRoom.price}/night\n`;
-        message += `Check-in: ${checkIn}\n`;
-        message += `Check-out: ${checkOut}\n\n`;
-        message += `📊 *Status:* Pending Approval\n\n`;
-        message += `⚡ *Action Required:*\n`;
-        message += `Please review and confirm in admin dashboard.\n`;
-        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        message += `👤 *GUEST DETAILS:*\n`;
+        message += `   Name: ${bookingData.guestName}\n`;
+        message += `   Phone: ${userData.phone}\n`;
+        message += `   Email: ${userData.email}\n\n`;
+        message += `🏨 *BOOKING DETAILS:*\n`;
+        message += `   Room Number: ${selectedRoom.roomNumber}\n`;
+        message += `   Room Type: ${selectedRoom.type}\n\n`;
+        message += `📅 *STAY DURATION:*\n`;
+        message += `   Check-in: ${checkIn}\n`;
+        message += `   Check-out: ${checkOut}\n`;
+        message += `   Number of Nights: ${numberOfNights}\n\n`;
+        message += `💰 *PRICING BREAKDOWN:*\n`;
+        message += `   Room Rate: ₹${roomPrice.toLocaleString('en-IN')} per night\n`;
+        message += `   Number of Nights: ${numberOfNights}\n`;
+        message += `   Subtotal: ₹${subtotal.toLocaleString('en-IN')}\n`;
+        
+        if (discount > 0) {
+            message += `   Discount (${offerName}): -₹${discount.toLocaleString('en-IN')}\n`;
+        }
+        
+        message += `   ━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        message += `💵 *TOTAL AMOUNT TO PAY: ₹${finalAmount.toLocaleString('en-IN')}*\n\n`;
+        message += `📊 *BOOKING STATUS:*\n`;
+        message += `   Status: PENDING APPROVAL\n\n`;
+        message += `⚡ *ACTION REQUIRED:*\n`;
+        message += `   Please review and confirm in admin dashboard\n`;
+        message += `   Go to: Booking Requests → Accept/Reject\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
         
         const encodedMessage = encodeURIComponent(message);
         const whatsappURL = `https://wa.me/${adminPhone}?text=${encodedMessage}`;
@@ -1834,6 +1896,15 @@ export default function UserDashboard({ onLogout, userData }) {
                                     </td>
                                     <td>
                                         <div className="action-buttons">
+                                            {(booking.status === 'Confirmed' || booking.status === 'Active' || booking.status === 'Completed') && (
+                                                <button 
+                                                    className="action-btn action-btn-invoice"
+                                                    onClick={() => downloadInvoice(booking._id)}
+                                                    title="Download Invoice"
+                                                >
+                                                    📄 Invoice
+                                                </button>
+                                            )}
                                             {booking.status === 'Confirmed' && (
                                                 <button 
                                                     className="action-btn action-btn-checkin"

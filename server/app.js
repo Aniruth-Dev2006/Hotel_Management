@@ -5,6 +5,7 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const PDFDocument = require("pdfkit");
 
 const app = express();
 const PORT = 3000;
@@ -703,21 +704,24 @@ app.post('/api/bookings/add', async (req, res) => {
         
         // Build pricing breakdown
         let pricingDetails = `💰 PRICING BREAKDOWN:
-   Room Rate: ₹${roomPrice}/night
+   Room Rate: ₹${roomPrice.toLocaleString('en-IN')} per night
    Number of Nights: ${numberOfNights}
-   Subtotal: ₹${totalAmount}`;
+   Subtotal: ₹${totalAmount.toLocaleString('en-IN')}`;
 
+        let amountToPay = totalAmount;
+        
         // Add discount details if offer was redeemed
         if (redeemedOfferId && finalAmount > 0) {
             const discountAmount = totalAmount - finalAmount;
             const offer = await Offer.findById(redeemedOfferId);
             pricingDetails += `
-   Discount (${offer.title}): -₹${discountAmount}
-   ✨ Final Amount: ₹${finalAmount}`;
-        } else {
-            pricingDetails += `
-   💵 Total Amount: ₹${totalAmount}`;
+   Discount (${offer.title}): -₹${discountAmount.toLocaleString('en-IN')}`;
+            amountToPay = finalAmount;
         }
+        
+        pricingDetails += `
+   ━━━━━━━━━━━━━━━━━━━━━━━━
+💵 TOTAL AMOUNT TO PAY: ₹${amountToPay.toLocaleString('en-IN')}`;
         
         // Notification to user
         const userMessage = `🏨 HotelMaster Booking Request
@@ -762,7 +766,7 @@ Thank you for choosing HotelMaster! 🌟`;
    Check-out: ${checkOut}
    Number of Nights: ${numberOfNights}
 
-${pricingDetails}${redeemedOfferId ? '\n   🎁 Credit Offer Applied!' : ''}
+${pricingDetails}
 
 📊 BOOKING STATUS:
    Status: PENDING APPROVAL
@@ -778,6 +782,176 @@ ${pricingDetails}${redeemedOfferId ? '\n   🎁 Credit Offer Applied!' : ''}
         res.status(201).json(populatedBooking);
     } catch (err) {
         res.status(400).json('Error adding booking request: ' + err.message);
+    }
+});
+
+// Generate PDF Invoice for booking
+app.get('/api/bookings/:id/invoice', async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id)
+            .populate('room')
+            .populate('user', 'name email phone')
+            .populate('redeemedOffer');
+        
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found.' });
+        }
+        
+        // Calculate pricing details
+        const checkInDate = new Date(booking.checkInDate);
+        const checkOutDate = new Date(booking.checkOutDate);
+        const numberOfNights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+        const roomPrice = booking.room.price;
+        const subtotal = roomPrice * numberOfNights;
+        
+        let discountAmount = 0;
+        let finalAmount = subtotal;
+        
+        if (booking.redeemedOffer && booking.finalAmount !== null) {
+            discountAmount = subtotal - booking.finalAmount;
+            finalAmount = booking.finalAmount;
+        }
+        
+        // Create PDF document
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=invoice_${booking._id}.pdf`);
+        
+        // Pipe PDF to response
+        doc.pipe(res);
+        
+        // Add Hotel Header
+        doc.fontSize(28).fillColor('#4f46e5').text('HotelMaster', { align: 'center' });
+        doc.fontSize(10).fillColor('#6b7280').text('Premium Hotel Management System', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.strokeColor('#e5e7eb').lineWidth(2).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(1);
+        
+        // Invoice Title
+        doc.fontSize(24).fillColor('#111827').text('BOOKING INVOICE', { align: 'center' });
+        doc.moveDown(0.3);
+        doc.fontSize(10).fillColor('#6b7280').text(`Invoice Date: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, { align: 'center' });
+        doc.text(`Booking ID: ${booking._id}`, { align: 'center' });
+        doc.moveDown(1.5);
+        
+        // Guest Information Box
+        const leftColumn = 50;
+        const rightColumn = 320;
+        let currentY = doc.y;
+        
+        doc.fontSize(12).fillColor('#111827').text('GUEST INFORMATION', leftColumn, currentY);
+        currentY += 20;
+        doc.fontSize(10).fillColor('#374151');
+        doc.text(`Name: ${booking.guestName}`, leftColumn, currentY);
+        currentY += 15;
+        doc.text(`Email: ${booking.user.email}`, leftColumn, currentY);
+        currentY += 15;
+        doc.text(`Phone: ${booking.user.phone}`, leftColumn, currentY);
+        
+        // Booking Status Box
+        currentY = doc.y - 45;
+        doc.fontSize(12).fillColor('#111827').text('BOOKING STATUS', rightColumn, currentY);
+        currentY += 20;
+        doc.fontSize(10).fillColor('#374151');
+        
+        // Status with color
+        const statusColors = {
+            'Requested': '#f59e0b',
+            'Confirmed': '#10b981',
+            'Active': '#3b82f6',
+            'Completed': '#6b7280',
+            'Rejected': '#ef4444'
+        };
+        doc.fillColor(statusColors[booking.status] || '#6b7280').text(`Status: ${booking.status}`, rightColumn, currentY);
+        currentY += 15;
+        doc.fillColor('#374151').text(`Created: ${new Date(booking.createdAt).toLocaleDateString('en-IN')}`, rightColumn, currentY);
+        
+        doc.moveDown(3);
+        
+        // Room Details Section
+        doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(1);
+        
+        doc.fontSize(14).fillColor('#111827').text('ROOM DETAILS', 50);
+        doc.moveDown(0.5);
+        
+        const roomDetailsY = doc.y;
+        doc.fontSize(10).fillColor('#374151');
+        doc.text(`Room Number: ${booking.room.roomNumber}`, 50, roomDetailsY);
+        doc.text(`Room Type: ${booking.room.type}`, 50, roomDetailsY + 15);
+        doc.text(`Air Conditioning: ${booking.room.hasAC ? 'Yes' : 'No'}`, 50, roomDetailsY + 30);
+        
+        doc.moveDown(3);
+        
+        // Stay Duration Section
+        doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(1);
+        
+        doc.fontSize(14).fillColor('#111827').text('STAY DURATION', 50);
+        doc.moveDown(0.5);
+        
+        const stayDetailsY = doc.y;
+        doc.fontSize(10).fillColor('#374151');
+        doc.text(`Check-in Date: ${checkInDate.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}`, 50, stayDetailsY);
+        doc.text(`Check-out Date: ${checkOutDate.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}`, 50, stayDetailsY + 15);
+        doc.text(`Number of Nights: ${numberOfNights}`, 50, stayDetailsY + 30);
+        
+        doc.moveDown(3);
+        
+        // Pricing Breakdown Section
+        doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(1);
+        
+        doc.fontSize(14).fillColor('#111827').text('PRICING BREAKDOWN', 50);
+        doc.moveDown(0.5);
+        
+        const pricingY = doc.y;
+        doc.fontSize(10).fillColor('#374151');
+        
+        // Room Rate
+        doc.text(`Room Rate:`, 50, pricingY);
+        doc.text(`₹${roomPrice.toLocaleString('en-IN')} per night`, 400, pricingY, { align: 'right', width: 145 });
+        
+        // Number of Nights
+        doc.text(`Number of Nights:`, 50, pricingY + 20);
+        doc.text(`${numberOfNights}`, 400, pricingY + 20, { align: 'right', width: 145 });
+        
+        // Subtotal
+        doc.strokeColor('#e5e7eb').lineWidth(0.5).moveTo(50, pricingY + 35).lineTo(545, pricingY + 35).stroke();
+        doc.text(`Subtotal:`, 50, pricingY + 45);
+        doc.text(`₹${subtotal.toLocaleString('en-IN')}`, 400, pricingY + 45, { align: 'right', width: 145 });
+        
+        let nextY = pricingY + 65;
+        
+        // Discount (if applicable)
+        if (discountAmount > 0 && booking.redeemedOffer) {
+            doc.fillColor('#10b981').text(`Discount (${booking.redeemedOffer.title}):`, 50, nextY);
+            doc.text(`-₹${discountAmount.toLocaleString('en-IN')}`, 400, nextY, { align: 'right', width: 145 });
+            nextY += 20;
+        }
+        
+        // Total Amount
+        doc.strokeColor('#4f46e5').lineWidth(2).moveTo(50, nextY).lineTo(545, nextY).stroke();
+        nextY += 15;
+        doc.fontSize(14).fillColor('#111827').text(`TOTAL AMOUNT:`, 50, nextY);
+        doc.fontSize(16).fillColor('#4f46e5').text(`₹${finalAmount.toLocaleString('en-IN')}`, 400, nextY, { align: 'right', width: 145 });
+        
+        doc.moveDown(4);
+        
+        // Footer
+        const footerY = 720;
+        doc.fontSize(8).fillColor('#9ca3af');
+        doc.text('Thank you for choosing HotelMaster!', 50, footerY, { align: 'center' });
+        doc.text('For any queries, please contact our support team.', 50, footerY + 12, { align: 'center' });
+        doc.strokeColor('#e5e7eb').lineWidth(1).moveTo(50, footerY - 10).lineTo(545, footerY - 10).stroke();
+        
+        // Finalize PDF
+        doc.end();
+        
+    } catch (err) {
+        res.status(500).json({ message: 'Error generating invoice: ' + err.message });
     }
 });
 
@@ -862,7 +1036,10 @@ Great news! Your booking has been APPROVED by the admin:
 📅 Check-out: ${checkOut}
 ✨ Status: Confirmed
 
-You can now check-in on your arrival date from your dashboard!
+📄 Your invoice is now available for download from your dashboard!
+   Go to: My Bookings → Click "Invoice" button
+
+You can also check-in on your arrival date from your dashboard!
 
 See you soon at HotelMaster! 🏨`;
                 

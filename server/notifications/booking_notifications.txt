@@ -1394,3 +1394,541 @@ HotelMaster Security Team 🔒
 
 ================================================================================
 
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:27:14 pm
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Aniruth! ✨
+
+Your booking request has been received:
+
+📍 ROOM DETAILS:
+   Room: 2 (Double)
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹2000/night
+   Number of Nights: 1
+   Subtotal: ₹2000
+   Discount (Test): -₹206
+   ✨ Final Amount: ₹1794
+
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:27:14 pm
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Aniruth
+   Phone: 9361377458
+   Email: aniruthrajagopal2006@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 2
+   Room Type: Double
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Number of Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹2000/night
+   Number of Nights: 1
+   Subtotal: ₹2000
+   Discount (Test): -₹206
+   ✨ Final Amount: ₹1794
+   🎁 Credit Offer Applied!
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68de305abe7432d03b8a24e0
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:30:07 pm
+📋 TYPE: BOOKING APPROVED BY ADMIN
+================================================================================
+
+✅ BOOKING CONFIRMED!
+
+Hello Aniruth! 🎉
+
+Great news! Your booking has been APPROVED by the admin:
+
+📍 Room: 2
+📅 Check-in: 3/10/2025
+📅 Check-out: 4/10/2025
+✨ Status: Confirmed
+
+You can now check-in on your arrival date from your dashboard!
+
+See you soon at HotelMaster! 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:30:14 pm
+📋 TYPE: CHECK-IN SUCCESSFUL
+================================================================================
+
+🔑 CHECKED IN SUCCESSFULLY!
+
+Welcome Aniruth! 🌟
+
+You have successfully checked into:
+📍 Room: 2
+📅 Check-out: 4/10/2025
+
+Enjoy your stay! When you're ready to leave, you can check-out from your dashboard.
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:30:14 pm
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Aniruth
+Status Changed: → Active
+Guest has checked in
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:30:16 pm
+📋 TYPE: CHECK-OUT SUCCESSFUL
+================================================================================
+
+👋 CHECKED OUT SUCCESSFULLY!
+
+Thank you for staying with us, Aniruth! 💙
+
+Room 2 checkout completed.
+We hope you had a wonderful experience!
+
+We look forward to hosting you again! 🌟
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:30:16 pm
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 2:
+Guest: Aniruth
+Status Changed: → Completed
+Guest has checked out
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:31:42 pm
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Aniruth! ✨
+
+Your booking request has been received:
+
+📍 ROOM DETAILS:
+   Room: 1 (Single)
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹1500 per night
+   Number of Nights: 1
+   Subtotal: ₹1500
+   Discount (LAUNCH APP): -₹197
+   
+💵 TOTAL AMOUNT TO PAY: ₹1303
+
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:31:42 pm
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Aniruth
+   Phone: 9361377458
+   Email: aniruthrajagopal2006@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 1
+   Room Type: Single
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Number of Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹1500 per night
+   Number of Nights: 1
+   Subtotal: ₹1500
+   Discount (LAUNCH APP): -₹197
+   
+💵 TOTAL AMOUNT TO PAY: ₹1303
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68de31665c1300d41f36733c
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:32:00 pm
+📋 TYPE: BOOKING APPROVED BY ADMIN
+================================================================================
+
+✅ BOOKING CONFIRMED!
+
+Hello Aniruth! 🎉
+
+Great news! Your booking has been APPROVED by the admin:
+
+📍 Room: 1
+📅 Check-in: 3/10/2025
+📅 Check-out: 4/10/2025
+✨ Status: Confirmed
+
+📄 Your invoice is now available for download from your dashboard!
+   Go to: My Bookings → Click "Invoice" button
+
+You can also check-in on your arrival date from your dashboard!
+
+See you soon at HotelMaster! 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:32:25 pm
+📋 TYPE: CHECK-IN SUCCESSFUL
+================================================================================
+
+🔑 CHECKED IN SUCCESSFULLY!
+
+Welcome Aniruth! 🌟
+
+You have successfully checked into:
+📍 Room: 1
+📅 Check-out: 4/10/2025
+
+Enjoy your stay! When you're ready to leave, you can check-out from your dashboard.
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:32:26 pm
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 1:
+Guest: Aniruth
+Status Changed: → Active
+Guest has checked in
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:32:35 pm
+📋 TYPE: CHECK-OUT SUCCESSFUL
+================================================================================
+
+👋 CHECKED OUT SUCCESSFULLY!
+
+Thank you for staying with us, Aniruth! 💙
+
+Room 1 checkout completed.
+We hope you had a wonderful experience!
+
+We look forward to hosting you again! 🌟
+
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:32:35 pm
+📋 TYPE: STATUS UPDATE
+================================================================================
+
+📊 BOOKING STATUS UPDATE
+
+Room 1:
+Guest: Aniruth
+Status Changed: → Completed
+Guest has checked out
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:34:43 pm
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Aniruth! ✨
+
+Your booking request has been received:
+
+📍 ROOM DETAILS:
+   Room: 3 (Suite)
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹3,000 per night
+   Number of Nights: 1
+   Subtotal: ₹3,000
+   Discount (Test): -₹206
+   ━━━━━━━━━━━━━━━━━━━━━━━━
+💵 TOTAL AMOUNT TO PAY: ₹2,794
+
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:34:43 pm
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Aniruth
+   Phone: 9361377458
+   Email: aniruthrajagopal2006@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 3
+   Room Type: Suite
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Number of Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹3,000 per night
+   Number of Nights: 1
+   Subtotal: ₹3,000
+   Discount (Test): -₹206
+   ━━━━━━━━━━━━━━━━━━━━━━━━
+💵 TOTAL AMOUNT TO PAY: ₹2,794
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68de321b5bed54675e159542
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:35:24 pm
+📋 TYPE: BOOKING CANCELLED
+================================================================================
+
+❌ BOOKING CANCELLED
+
+Hello Aniruth,
+
+Your booking request for Room 3 has been cancelled.
+
+📅 Dates: 3/10/2025 - 4/10/2025
+
+Please feel free to make a new booking for different dates.
+
+Thank you for your understanding.
+HotelMaster Team 🏨
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 9361377458
+⏰ TIME: 2/10/2025, 1:37:07 pm
+📋 TYPE: USER BOOKING CONFIRMATION
+================================================================================
+
+🏨 HotelMaster Booking Request
+
+Hello Aniruth! ✨
+
+Your booking request has been received:
+
+📍 ROOM DETAILS:
+   Room: 3 (Suite)
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹3,000 per night
+   Number of Nights: 1
+   Subtotal: ₹3,000
+   Discount (Test): -₹206
+   ━━━━━━━━━━━━━━━━━━━━━━━━
+💵 TOTAL AMOUNT TO PAY: ₹2,794
+
+⏳ Status: Pending Admin Approval
+
+We'll notify you once the admin confirms your booking!
+
+Thank you for choosing HotelMaster! 🌟
+
+================================================================================
+
+
+================================================================================
+📱 NOTIFICATION FOR: 919361377458
+⏰ TIME: 2/10/2025, 1:37:07 pm
+📋 TYPE: ADMIN ALERT - NEW BOOKING
+================================================================================
+
+🔔 NEW BOOKING REQUEST RECEIVED!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 GUEST DETAILS:
+   Name: Aniruth
+   Phone: 9361377458
+   Email: aniruthrajagopal2006@gmail.com
+
+🏨 BOOKING DETAILS:
+   Room Number: 3
+   Room Type: Suite
+   
+📅 STAY DURATION:
+   Check-in: 3/10/2025
+   Check-out: 4/10/2025
+   Number of Nights: 1
+
+💰 PRICING BREAKDOWN:
+   Room Rate: ₹3,000 per night
+   Number of Nights: 1
+   Subtotal: ₹3,000
+   Discount (Test): -₹206
+   ━━━━━━━━━━━━━━━━━━━━━━━━
+💵 TOTAL AMOUNT TO PAY: ₹2,794
+
+📊 BOOKING STATUS:
+   Status: PENDING APPROVAL
+   Booking ID: 68de32ab5bed54675e159583
+   
+⚡ ACTION REQUIRED:
+   Please review and confirm in the admin dashboard
+   Go to: Booking Requests → Accept/Reject
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+

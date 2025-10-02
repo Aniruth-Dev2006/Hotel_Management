@@ -397,7 +397,7 @@ const UserCreditsStyles = () => (
     `}</style>
 );
 
-export default function UserCredits({ userData }) {
+export default function UserCredits({ userData, refreshTrigger }) {
     const [credits, setCredits] = useState({ points: 0, totalEarned: 0, totalRedeemed: 0 });
     const [offers, setOffers] = useState([]);
     const [transactions, setTransactions] = useState([]);
@@ -409,6 +409,24 @@ export default function UserCredits({ userData }) {
         fetchCredits();
         fetchOffers();
         fetchTransactions();
+    }, [userData.id]);
+
+    // Refresh when refreshTrigger prop changes (from parent component)
+    useEffect(() => {
+        if (refreshTrigger) {
+            fetchCredits();
+            fetchTransactions();
+        }
+    }, [refreshTrigger]);
+
+    // Auto-refresh credits and transactions every 5 seconds for real-time updates
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchCredits();
+            fetchTransactions();
+        }, 5000);
+        
+        return () => clearInterval(interval);
     }, [userData.id]);
 
     const fetchCredits = async () => {

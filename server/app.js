@@ -4,13 +4,58 @@ const cors = require("cors");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const multer = require("multer");
 
 const app = express();
 const PORT = 3000;
 
+// --- Create uploads directory if it doesn't exist ---
+const uploadsDir = path.join(__dirname, 'uploads');
+const roomPhotosDir = path.join(uploadsDir, 'rooms');
+const profilePhotosDir = path.join(uploadsDir, 'profiles');
+
+[uploadsDir, roomPhotosDir, profilePhotosDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
+
+// --- Multer Configuration for File Uploads ---
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        if (req.path.includes('/rooms/')) {
+            cb(null, roomPhotosDir);
+        } else if (req.path.includes('/users/')) {
+            cb(null, profilePhotosDir);
+        } else {
+            cb(null, uploadsDir);
+        }
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    // Accept images only
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only image files are allowed!'), false);
+    }
+};
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
 // --- Middleware ---
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(uploadsDir)); // Serve uploaded files
 
 // --- Notification Configuration ---
 const ADMIN_PHONE = '919361377458'; // Your phone number (with country code)
@@ -144,8 +189,9 @@ async function sendNotification(toNumber, message, notificationType = 'NOTIFICAT
     // Try to send via WhatsApp if configured
     if (whatsappEnabled) {
         try {
-            await sendWhatsAppViaCallMeBot(ADMIN_PHONE, `🔔 ${notificationType}\n\n${message}`);
-            console.log(`📱 WhatsApp notification sent!\n`);
+            // Send to the correct recipient's phone number (not admin!)
+            await sendWhatsAppViaCallMeBot(toNumber, `🔔 ${notificationType}\n\n${message}`);
+            console.log(`📱 WhatsApp notification sent to ${toNumber}!\n`);
             return { success: true, channels: ['console', 'file', 'whatsapp'] };
         } catch (error) {
             console.error(`⚠️ WhatsApp failed (but console & file notification sent): ${error.message}\n`);
@@ -174,6 +220,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phone: { type: String, required: true },
+    profilePicture: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model("User", userSchema);
@@ -314,6 +361,7 @@ app.post('/api/auth/login', async (req, res) => {
                         name: user.name, 
                         email: user.email, 
                         phone: user.phone,
+                        profilePicture: user.profilePicture || '',
                         createdAt: user.createdAt 
                     }
                 });
@@ -337,6 +385,71 @@ app.get('/api/users/:id', async (req, res) => {
     }
 });
 
+// Update user profile
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const { name, phone, email } = req.body;
+        const user = await User.findById(req.params.id);
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // Check if email is being changed and if it's already taken
+        if (email && email !== user.email) {
+            const emailExists = await User.findOne({ email });
+            if (emailExists) {
+                return res.status(400).json({ message: 'Email already exists.' });
+            }
+        }
+
+        // Update fields
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (email) user.email = email;
+
+        await user.save();
+        
+        const updatedUser = await User.findById(req.params.id).select('-password');
+        res.json({ message: 'Profile updated successfully!', user: updatedUser });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error: ' + err.message });
+    }
+});
+
+// Upload profile picture
+app.post('/api/users/:id/upload-profile', upload.single('profilePicture'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded.' });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // Delete old profile picture if exists
+        if (user.profilePicture) {
+            const oldPath = path.join(__dirname, user.profilePicture.replace('http://localhost:3000/', ''));
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
+        }
+
+        // Save new profile picture URL
+        user.profilePicture = `http://localhost:3000/uploads/profiles/${req.file.filename}`;
+        await user.save();
+
+        res.json({ 
+            message: 'Profile picture uploaded successfully!', 
+            profilePicture: user.profilePicture 
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error uploading profile picture: ' + err.message });
+    }
+});
+
 // --- Room Routes ---
 app.get('/api/rooms', (req, res) => {
     Room.find()
@@ -344,10 +457,24 @@ app.get('/api/rooms', (req, res) => {
         .catch(err => res.status(400).json('Error: ' + err));
 });
 
-app.post('/api/rooms/add', async (req, res) => {
-    const { roomNumber, type, price, hasAC, photoUrl } = req.body;
-    const newRoom = new Room({ roomNumber, type, price, hasAC, photoUrl });
+// Add room with photo upload
+app.post('/api/rooms/add', upload.single('roomPhoto'), async (req, res) => {
     try {
+        const { roomNumber, type, price, hasAC } = req.body;
+        
+        let photoUrl = '';
+        if (req.file) {
+            photoUrl = `http://localhost:3000/uploads/rooms/${req.file.filename}`;
+        }
+        
+        const newRoom = new Room({ 
+            roomNumber, 
+            type, 
+            price: Number(price), 
+            hasAC: hasAC === 'true', 
+            photoUrl 
+        });
+        
         const savedRoom = await newRoom.save();
         res.status(201).json(savedRoom);
     } catch (err) {
@@ -355,10 +482,85 @@ app.post('/api/rooms/add', async (req, res) => {
     }
 });
 
+// Upload/Update room photo
+app.post('/api/rooms/:id/upload-photo', upload.single('roomPhoto'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded.' });
+        }
+
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Room not found.' });
+        }
+
+        // Delete old photo if exists
+        if (room.photoUrl) {
+            const oldPath = path.join(__dirname, room.photoUrl.replace('http://localhost:3000/', ''));
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
+        }
+
+        // Save new photo URL
+        room.photoUrl = `http://localhost:3000/uploads/rooms/${req.file.filename}`;
+        await room.save();
+
+        res.json({ 
+            message: 'Room photo uploaded successfully!', 
+            room: room 
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error uploading room photo: ' + err.message });
+    }
+});
+
+// Update room details
+app.put('/api/rooms/:id', async (req, res) => {
+    try {
+        const { roomNumber, type, price, hasAC } = req.body;
+        
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: 'Room not found.' });
+        }
+
+        // Check if room number is being changed and if it already exists
+        if (roomNumber && roomNumber !== room.roomNumber) {
+            const existingRoom = await Room.findOne({ roomNumber });
+            if (existingRoom) {
+                return res.status(400).json({ message: 'Room number already exists.' });
+            }
+        }
+
+        // Update fields
+        if (roomNumber) room.roomNumber = roomNumber;
+        if (type) room.type = type;
+        if (price !== undefined) room.price = Number(price);
+        if (hasAC !== undefined) room.hasAC = hasAC;
+
+        await room.save();
+        
+        res.json({ message: 'Room updated successfully!', room: room });
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating room: ' + err.message });
+    }
+});
+
 app.delete('/api/rooms/:id', async (req, res) => {
     try {
-        const deletedRoom = await Room.findByIdAndDelete(req.params.id);
-        if (!deletedRoom) return res.status(404).json('Room not found.');
+        const room = await Room.findById(req.params.id);
+        if (!room) return res.status(404).json('Room not found.');
+        
+        // Delete photo file if exists
+        if (room.photoUrl) {
+            const photoPath = path.join(__dirname, room.photoUrl.replace('http://localhost:3000/', ''));
+            if (fs.existsSync(photoPath)) {
+                fs.unlinkSync(photoPath);
+            }
+        }
+        
+        await Room.findByIdAndDelete(req.params.id);
         res.json('Room deleted successfully.');
     } catch (err) {
         res.status(400).json('Error deleting room: ' + err.message);
@@ -484,7 +686,7 @@ app.post('/api/bookings/add', async (req, res) => {
             .populate('room')
             .populate('user', 'name email phone');
         
-        // Send notifications
+        // Send notifications with complete pricing details
         const userPhone = populatedBooking.user.phone;
         const userEmail = populatedBooking.user.email;
         const roomNumber = populatedBooking.room.roomNumber;
@@ -493,16 +695,47 @@ app.post('/api/bookings/add', async (req, res) => {
         const checkIn = new Date(checkInDate).toLocaleDateString('en-IN');
         const checkOut = new Date(checkOutDate).toLocaleDateString('en-IN');
         
+        // Calculate pricing details
+        const checkInDate_obj = new Date(checkInDate);
+        const checkOutDate_obj = new Date(checkOutDate);
+        const numberOfNights = Math.ceil((checkOutDate_obj - checkInDate_obj) / (1000 * 60 * 60 * 24));
+        const totalAmount = roomPrice * numberOfNights;
+        
+        // Build pricing breakdown
+        let pricingDetails = `💰 PRICING BREAKDOWN:
+   Room Rate: ₹${roomPrice}/night
+   Number of Nights: ${numberOfNights}
+   Subtotal: ₹${totalAmount}`;
+
+        // Add discount details if offer was redeemed
+        if (redeemedOfferId && finalAmount > 0) {
+            const discountAmount = totalAmount - finalAmount;
+            const offer = await Offer.findById(redeemedOfferId);
+            pricingDetails += `
+   Discount (${offer.title}): -₹${discountAmount}
+   ✨ Final Amount: ₹${finalAmount}`;
+        } else {
+            pricingDetails += `
+   💵 Total Amount: ₹${totalAmount}`;
+        }
+        
         // Notification to user
         const userMessage = `🏨 HotelMaster Booking Request
 
 Hello ${guestName}! ✨
 
 Your booking request has been received:
-📍 Room: ${roomNumber} (${roomType})
-💰 Price: ₹${roomPrice}/night
-📅 Check-in: ${checkIn}
-📅 Check-out: ${checkOut}
+
+📍 ROOM DETAILS:
+   Room: ${roomNumber} (${roomType})
+   
+📅 STAY DURATION:
+   Check-in: ${checkIn}
+   Check-out: ${checkOut}
+   Nights: ${numberOfNights}
+
+${pricingDetails}
+
 ⏳ Status: Pending Admin Approval
 
 We'll notify you once the admin confirms your booking!
@@ -511,7 +744,7 @@ Thank you for choosing HotelMaster! 🌟`;
         
         await sendNotification(userPhone, userMessage, 'USER BOOKING CONFIRMATION');
         
-        // IMPORTANT: Notification to admin (9361377458) with ALL details
+        // IMPORTANT: Notification to admin with complete details including pricing
         const adminMessage = `🔔 NEW BOOKING REQUEST RECEIVED!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -523,9 +756,13 @@ Thank you for choosing HotelMaster! 🌟`;
 🏨 BOOKING DETAILS:
    Room Number: ${roomNumber}
    Room Type: ${roomType}
-   Price: ₹${roomPrice}/night
+   
+📅 STAY DURATION:
    Check-in: ${checkIn}
    Check-out: ${checkOut}
+   Number of Nights: ${numberOfNights}
+
+${pricingDetails}${redeemedOfferId ? '\n   🎁 Credit Offer Applied!' : ''}
 
 📊 BOOKING STATUS:
    Status: PENDING APPROVAL

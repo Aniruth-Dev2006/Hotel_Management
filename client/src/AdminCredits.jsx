@@ -416,6 +416,19 @@ export default function AdminCredits() {
         }
     }, [activeTab]);
 
+    // Auto-refresh data every 10 seconds for real-time updates in admin panel
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (activeTab === 'offers') {
+                fetchOffers();
+            } else if (activeTab === 'credits') {
+                fetchCredits();
+            }
+        }, 10000);
+        
+        return () => clearInterval(interval);
+    }, [activeTab]);
+
     const fetchOffers = async () => {
         setLoading(true);
         try {

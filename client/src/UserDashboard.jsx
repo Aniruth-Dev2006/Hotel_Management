@@ -1309,6 +1309,14 @@ export default function UserDashboard({ onLogout, userData }) {
         { type: 'bot', text: 'Hello! 👋 I\'m your HotelMaster Bot assistant. I can help you with room bookings, availability, pricing, and any questions you have. How can I assist you today?' }
     ]);
     const [chatInput, setChatInput] = useState('');
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [profileForm, setProfileForm] = useState({
+        name: userData?.name || '',
+        email: userData?.email || '',
+        phone: userData?.phone || ''
+    });
+    const [profilePictureFile, setProfilePictureFile] = useState(null);
+    const [profilePicturePreview, setProfilePicturePreview] = useState(userData?.profilePicture || '');
     
     // Filter states
     const [filters, setFilters] = useState({
@@ -1376,14 +1384,27 @@ export default function UserDashboard({ onLogout, userData }) {
     useEffect(() => {
         if (activeView === 'rooms') {
             fetchRooms();
+            fetchUserCredits(); // Refresh credits when viewing rooms
         } else if (activeView === 'bookings') {
             fetchMyBookings();
+            fetchUserCredits(); // Refresh credits when viewing bookings
+        } else if (activeView === 'credits') {
+            fetchUserCredits(); // Refresh credits when viewing credits page
         }
     }, [activeView]);
 
     useEffect(() => {
         fetchOffers();
         fetchUserCredits();
+    }, [userData.id]);
+
+    // Auto-refresh credits every 5 seconds for real-time updates
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchUserCredits();
+        }, 5000);
+        
+        return () => clearInterval(interval);
     }, [userData.id]);
 
     // Apply filters
@@ -1429,7 +1450,7 @@ export default function UserDashboard({ onLogout, userData }) {
         if (!selectedRoom) return;
         
         try {
-            await apiClient.post('/bookings/add', {
+            const response = await apiClient.post('/bookings/add', {
                 guestName: bookingData.guestName,
                 room: selectedRoom._id,
                 userId: userData.id,
@@ -1445,11 +1466,12 @@ export default function UserDashboard({ onLogout, userData }) {
             setShowBookingModal(false);
             setBookingData({ checkInDate: '', checkOutDate: '', guestName: userData?.name || '' });
             setSelectedRoom(null);
+            const usedOffer = selectedOffer;
             setSelectedOffer(null);
             
             // Update success message based on offer redemption
-            if (selectedOffer) {
-                setSuccessMessage(`Booking request submitted successfully! You redeemed "${selectedOffer.title}" and saved credits!`);
+            if (usedOffer) {
+                setSuccessMessage(`Booking request submitted successfully! You redeemed "${usedOffer.title}" and saved credits!`);
             } else {
                 setSuccessMessage('Booking request submitted successfully!');
             }
@@ -1457,13 +1479,23 @@ export default function UserDashboard({ onLogout, userData }) {
             setShowSuccessPopup(true);
             setTimeout(() => setShowSuccessPopup(false), 4000);
             
-            // Refresh credits and bookings
-            fetchUserCredits();
-            fetchMyBookings();
-            fetchRooms(); // Refresh rooms
+            // Immediately refresh all data for dynamic updates
+            await Promise.all([
+                fetchUserCredits(),
+                fetchMyBookings(),
+                fetchRooms(),
+                fetchOffers()
+            ]);
+            
+            // Force a second refresh after a short delay to ensure database has updated
+            setTimeout(async () => {
+                await fetchUserCredits();
+            }, 1000);
+            
         } catch (error) {
             console.error('Booking failed:', error);
-            alert('Failed to create booking. Please try again.');
+            const errorMessage = error.response?.data?.message || 'Failed to create booking. Please try again.';
+            alert(errorMessage);
         }
     };
 
@@ -1533,6 +1565,57 @@ export default function UserDashboard({ onLogout, userData }) {
     const handleNavigation = (view) => {
         setActiveView(view);
         setIsMenuOpen(false);
+    };
+
+    // Profile update handlers
+    const handleProfilePictureChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size should be less than 5MB');
+                return;
+            }
+            setProfilePictureFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfilePicturePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleProfileUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            // Update profile data
+            const response = await apiClient.put(`/users/${userData.id}`, profileForm);
+            
+            // Upload profile picture if selected
+            if (profilePictureFile) {
+                const formData = new FormData();
+                formData.append('profilePicture', profilePictureFile);
+                const photoResponse = await apiClient.post(`/users/${userData.id}/upload-profile`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                userData.profilePicture = photoResponse.data.profilePicture;
+            }
+            
+            // Update local userData
+            userData.name = profileForm.name;
+            userData.email = profileForm.email;
+            userData.phone = profileForm.phone;
+            
+            setIsEditingProfile(false);
+            setProfilePictureFile(null);
+            setSuccessMessage('Profile updated successfully!');
+            setShowSuccessPopup(true);
+            setTimeout(() => setShowSuccessPopup(false), 3000);
+        } catch (error) {
+            console.error('Profile update failed:', error);
+            alert(error.response?.data?.message || 'Failed to update profile. Please try again.');
+        }
     };
 
     // Chatbot message handler with Gemini API
@@ -1786,7 +1869,7 @@ export default function UserDashboard({ onLogout, userData }) {
         </>
     );
 
-    // Render Profile View with Dynamic Data
+    // Render Profile View with Edit Functionality
     const renderProfileView = () => {
         const memberSince = userData.createdAt 
             ? new Date(userData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -1798,39 +1881,133 @@ export default function UserDashboard({ onLogout, userData }) {
                 <div className="profile-section">
                     <div className="profile-header">
                         <div className="profile-avatar">
-                            {userData.name.charAt(0).toUpperCase()}
+                            {profilePicturePreview || userData.profilePicture ? (
+                                <img 
+                                    src={profilePicturePreview || userData.profilePicture} 
+                                    alt="Profile" 
+                                    style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}}
+                                />
+                            ) : (
+                                userData.name.charAt(0).toUpperCase()
+                            )}
                         </div>
                         <div className="profile-info">
                             <h2>{userData.name}</h2>
                             <p>Member since {memberSince}</p>
                         </div>
                     </div>
-                    <div className="profile-details">
-                        <div className="detail-row">
-                            <span className="detail-label">Full Name</span>
-                            <span className="detail-value">{userData.name}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Email</span>
-                            <span className="detail-value">{userData.email}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Phone</span>
-                            <span className="detail-value">{userData.phone}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Total Bookings</span>
-                            <span className="detail-value">{myBookings.length}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">User ID</span>
-                            <span className="detail-value">{userData.id}</span>
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Account Status</span>
-                            <span className="detail-value" style={{color: '#10b981'}}>Active</span>
-                        </div>
-                    </div>
+                    
+                    {!isEditingProfile ? (
+                        <>
+                            <div className="profile-details">
+                                <div className="detail-row">
+                                    <span className="detail-label">Full Name</span>
+                                    <span className="detail-value">{userData.name}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Email</span>
+                                    <span className="detail-value">{userData.email}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Phone</span>
+                                    <span className="detail-value">{userData.phone}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Total Bookings</span>
+                                    <span className="detail-value">{myBookings.length}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">User ID</span>
+                                    <span className="detail-value">{userData.id}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Account Status</span>
+                                    <span className="detail-value" style={{color: '#10b981'}}>Active</span>
+                                </div>
+                            </div>
+                            <div style={{marginTop: '2rem', textAlign: 'center'}}>
+                                <button 
+                                    onClick={() => {
+                                        setIsEditingProfile(true);
+                                        setProfileForm({
+                                            name: userData.name,
+                                            email: userData.email,
+                                            phone: userData.phone
+                                        });
+                                    }} 
+                                    className="btn btn-primary"
+                                    style={{padding: '0.75rem 2rem'}}
+                                >
+                                    ✏️ Edit Profile
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <form onSubmit={handleProfileUpdate} style={{marginTop: '2rem'}}>
+                            <div className="booking-form">
+                                <div className="input-group">
+                                    <label>Profile Picture</label>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        onChange={handleProfilePictureChange}
+                                        style={{padding: '0.5rem'}}
+                                    />
+                                    <small style={{color: '#6b7280', fontSize: '0.875rem', display: 'block', marginTop: '0.5rem'}}>
+                                        Max file size: 5MB. Supported formats: JPG, PNG, GIF
+                                    </small>
+                                </div>
+                                <div className="input-group">
+                                    <label>Full Name *</label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        value={profileForm.name}
+                                        onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Email *</label>
+                                    <input 
+                                        type="email" 
+                                        required
+                                        value={profileForm.email}
+                                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Phone *</label>
+                                    <input 
+                                        type="tel" 
+                                        required
+                                        value={profileForm.phone}
+                                        onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                                    />
+                                </div>
+                                <div style={{display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'center'}}>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {
+                                            setIsEditingProfile(false);
+                                            setProfilePictureFile(null);
+                                            setProfilePicturePreview(userData.profilePicture || '');
+                                        }} 
+                                        className="btn btn-secondary"
+                                        style={{padding: '0.75rem 2rem'}}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        className="btn btn-primary"
+                                        style={{padding: '0.75rem 2rem'}}
+                                    >
+                                        💾 Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    )}
                 </div>
             </>
         );
@@ -1913,7 +2090,7 @@ export default function UserDashboard({ onLogout, userData }) {
                 <div className="user-main-content">
                     {activeView === 'rooms' && renderRoomsView()}
                     {activeView === 'bookings' && renderBookingsView()}
-                    {activeView === 'credits' && <UserCredits userData={userData} />}
+                    {activeView === 'credits' && <UserCredits userData={userData} refreshTrigger={userCredits} />}
                     {activeView === 'notifications' && <UserNotifications userData={userData} />}
                     {activeView === 'feedback' && <Feedback userData={userData} />}
                     {activeView === 'profile' && renderProfileView()}

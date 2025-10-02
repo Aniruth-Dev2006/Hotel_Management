@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import Feedback from './Feedback.jsx';
 import UserNotifications from './UserNotifications.jsx';
 import UserCredits from './UserCredits.jsx';
@@ -155,6 +157,393 @@ const UserDashboardStyles = () => (
             font-weight: bold;
             color: #111827;
             margin-bottom: 1.5rem;
+        }
+        
+        /* Date Filter Section - Improved */
+        .date-filter-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.75rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .date-filter-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .date-filter-header {
+            text-align: center;
+        }
+        
+        .date-filter-title {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin: 0 0 0.25rem 0;
+        }
+        
+        .date-filter-subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+        
+        .date-inputs-wrapper {
+            display: flex;
+            gap: 1.5rem;
+            width: 100%;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+        }
+        
+        .date-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .date-label {
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .date-icon {
+            font-size: 1.125rem;
+        }
+        
+        .date-input {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: white;
+            color: #1f2937;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .date-input:focus {
+            outline: none;
+            border-color: white;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5), 0 4px 10px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .date-input::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: opacity(0.6);
+        }
+        
+        .date-buttons-wrapper {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn-check-availability,
+        .btn-clear-dates {
+            padding: 0.75rem 1.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+        
+        .btn-check-availability {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            justify-content: center;
+        }
+        
+        .btn-check-availability:hover {
+            background: #f9fafb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        }
+        
+        .btn-check-availability:active {
+            transform: translateY(0);
+        }
+        
+        .btn-clear-dates {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-clear-dates:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-icon {
+            font-size: 1.125rem;
+        }
+        
+        .availability-info {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .availability-message {
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .availability-stats {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-item.available {
+            background: rgba(16, 185, 129, 0.2);
+            color: #d1fae5;
+            border: 2px solid rgba(16, 185, 129, 0.4);
+        }
+        
+        .stat-item.unavailable {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fecaca;
+            border: 2px solid rgba(239, 68, 68, 0.4);
+        }
+        
+        .stat-icon {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+        
+        /* React DatePicker Custom Styles */
+        .custom-datepicker {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: white;
+            color: #1f2937;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: 500;
+            box-sizing: border-box;
+        }
+        
+        .custom-datepicker:focus {
+            outline: none;
+            border-color: white;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5), 0 4px 10px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .react-datepicker-wrapper {
+            width: 100%;
+        }
+        
+        .react-datepicker__input-container {
+            width: 100%;
+        }
+        
+        .react-datepicker {
+            font-family: inherit;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .react-datepicker__header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            padding-top: 1rem;
+        }
+        
+        .react-datepicker__current-month {
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .react-datepicker__day-name {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            width: 2.5rem;
+            line-height: 2.5rem;
+        }
+        
+        .react-datepicker__day {
+            width: 2.5rem;
+            line-height: 2.5rem;
+            margin: 0.15rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .react-datepicker__day:hover {
+            background-color: #e0e7ff;
+            border-radius: 8px;
+        }
+        
+        .react-datepicker__day--selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .react-datepicker__day--disabled {
+            color: white !important;
+            background-color: #ef4444 !important;
+            cursor: not-allowed;
+            position: relative;
+            font-weight: 600;
+        }
+        
+        .react-datepicker__day--disabled:hover {
+            background-color: #dc2626 !important;
+        }
+        
+        .date-availability-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.125rem;
+        }
+        
+        .date-day-number {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .date-availability-count {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.125rem 0.25rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        
+        .availability-high {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .availability-medium {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .availability-low {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .availability-none {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .calendar-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.95);
+        }
+        
+        .legend-badge {
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.65rem;
+        }
+        
+        .react-datepicker__day--today {
+            font-weight: bold;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .react-datepicker__navigation {
+            top: 1rem;
+        }
+        
+        .react-datepicker__navigation-icon::before {
+            border-color: white;
+        }
+        
+        .react-datepicker__month {
+            padding: 0.5rem;
+        }
+        
+        /* DatePicker in booking modal */
+        .input-group .custom-datepicker {
+            width: 100%;
+        }
+        
+        .input-group .react-datepicker-wrapper {
+            width: 100%;
+        }
+        
+        .input-group .react-datepicker__input-container {
+            width: 100%;
         }
         
         /* Search & Filter Section */
@@ -1257,6 +1646,47 @@ const UserDashboardStyles = () => (
             }
         }
         
+        /* Tablet responsive for date filter */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .date-filter-section {
+                padding: 1.5rem;
+            }
+            
+            .date-filter-title {
+                font-size: 1.15rem !important;
+            }
+            
+            .date-filter-subtitle {
+                font-size: 0.825rem !important;
+            }
+            
+            .date-inputs-wrapper {
+                gap: 1.25rem;
+                flex-wrap: nowrap;
+            }
+            
+            .date-input-group {
+                min-width: 230px;
+                max-width: 350px;
+            }
+            
+            .date-input,
+            .custom-datepicker {
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .date-buttons-wrapper {
+                gap: 0.75rem;
+            }
+            
+            .btn-check-availability,
+            .btn-clear-dates {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.875rem;
+            }
+        }
+        
         @media (max-width: 768px) {
             .user-main-content {
                 padding: 1rem;
@@ -1290,6 +1720,92 @@ const UserDashboardStyles = () => (
             .chatbot-button {
                 bottom: 1.5rem;
                 right: 1.5rem;
+            }
+            
+            /* Mobile responsive for date filter */
+            .date-filter-section {
+                padding: 1.25rem;
+                border-radius: 10px;
+                margin-bottom: 1.5rem;
+                margin-left: 0;
+                margin-right: 0;
+            }
+            
+            .date-filter-content {
+                gap: 1rem;
+            }
+            
+            .date-filter-title {
+                font-size: 1.1rem !important;
+            }
+            
+            .date-filter-subtitle {
+                font-size: 0.8rem !important;
+            }
+            
+            .date-inputs-wrapper {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .date-input-group {
+                min-width: 100%;
+                max-width: 100%;
+            }
+            
+            .date-input,
+            .custom-datepicker {
+                padding: 0.875rem 1rem;
+                font-size: 1rem;
+            }
+            
+            .react-datepicker {
+                font-size: 0.9rem;
+            }
+            
+            .react-datepicker__day {
+                width: 2.2rem;
+                line-height: 2.2rem;
+            }
+            
+            .date-label {
+                font-size: 0.9rem;
+            }
+            
+            .date-buttons-wrapper {
+                flex-direction: column;
+                gap: 0.625rem;
+                width: 100%;
+            }
+            
+            .btn-check-availability,
+            .btn-clear-dates {
+                width: 100%;
+                justify-content: center;
+                padding: 0.875rem 1.5rem;
+                font-size: 0.95rem;
+            }
+            
+            .availability-info {
+                gap: 0.625rem;
+                margin-top: 0.75rem;
+                padding-top: 0.75rem;
+            }
+            
+            .availability-message {
+                font-size: 0.8rem;
+                line-height: 1.4;
+            }
+            
+            .availability-stats {
+                gap: 0.625rem;
+                flex-direction: column;
+            }
+            
+            .stat-item {
+                padding: 0.625rem 1rem;
+                font-size: 0.85rem;
+                width: 100%;
             }
         }
     `}</style>
@@ -1331,8 +1847,17 @@ export default function UserDashboard({ onLogout, userData }) {
         minPrice: '',
         maxPrice: '',
         hasAC: '',
-        searchTerm: ''
+        searchTerm: '',
+        checkInDate: '',
+        checkOutDate: ''
     });
+    
+    // Booked dates for calendar
+    const [bookedDates, setBookedDates] = useState([]);
+    const [allBookings, setAllBookings] = useState([]);
+    const [dateAvailability, setDateAvailability] = useState({});
+    const [totalRoomsCount, setTotalRoomsCount] = useState(0);
+    const [roomSpecificBookedDates, setRoomSpecificBookedDates] = useState([]);
     
     // Booking form data
     const [bookingData, setBookingData] = useState({
@@ -1340,18 +1865,184 @@ export default function UserDashboard({ onLogout, userData }) {
         checkOutDate: '',
         guestName: userData?.name || ''
     });
+    
+    // Availability checking states
+    const [checkingAvailability, setCheckingAvailability] = useState(false);
+    const [availabilityMessage, setAvailabilityMessage] = useState('');
+    const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+    const [availabilityStatus, setAvailabilityStatus] = useState(null); // 'available', 'unavailable', 'error'
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
-    // Fetch rooms
-    const fetchRooms = async () => {
+    // Fetch rooms with optional date filtering
+    const fetchRooms = async (checkIn = null, checkOut = null) => {
         try {
             setLoading(true);
-            const response = await apiClient.get('/rooms');
+            let url = '/rooms';
+            if (checkIn && checkOut) {
+                url += `?checkInDate=${checkIn}&checkOutDate=${checkOut}`;
+            }
+            const response = await apiClient.get(url);
             setRooms(response.data);
             setFilteredRooms(response.data);
         } catch (error) {
             console.error('Failed to fetch rooms:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Fetch all bookings to determine unavailable dates
+    const fetchAllBookings = async () => {
+        try {
+            // Fetch total room count
+            const roomsResponse = await apiClient.get('/rooms');
+            const totalRooms = roomsResponse.data.length;
+            setTotalRoomsCount(totalRooms);
+            
+            // Fetch all bookings without userId filter
+            const response = await apiClient.get('/bookings');
+            const bookings = response.data.filter(b => 
+                b.status === 'Requested' || b.status === 'Confirmed' || b.status === 'Active'
+            );
+            setAllBookings(bookings);
+            
+            // Calculate availability for each date
+            const availability = {};
+            const fullyBookedDates = [];
+            
+            // Get next 365 days
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() + i);
+                date.setHours(0, 0, 0, 0);
+                const dateKey = date.toISOString().split('T')[0];
+                
+                // Count bookings for this date
+                let bookedRooms = 0;
+                const currentDateStr = dateKey;
+                
+                bookings.forEach(booking => {
+                    const checkInStr = booking.checkInDate.split('T')[0];
+                    const checkOutStr = booking.checkOutDate.split('T')[0];
+                    
+                    // Compare date strings directly (YYYY-MM-DD format)
+                    if (currentDateStr >= checkInStr && currentDateStr <= checkOutStr) {
+                        bookedRooms++;
+                    }
+                });
+                
+                const availableRooms = totalRooms - bookedRooms;
+                availability[dateKey] = {
+                    total: totalRooms,
+                    booked: bookedRooms,
+                    available: availableRooms
+                };
+                
+                // If fully booked, add to disabled dates
+                if (availableRooms === 0) {
+                    const disabledDate = new Date(dateKey);
+                    disabledDate.setHours(0, 0, 0, 0);
+                    fullyBookedDates.push(disabledDate);
+                }
+            }
+            
+            setDateAvailability(availability);
+            setBookedDates(fullyBookedDates);
+        } catch (error) {
+            console.error('Failed to fetch bookings:', error);
+        }
+    };
+
+    // Check if a date is disabled (booked)
+    const isDateDisabled = (date) => {
+        return bookedDates.some(bookedDate => 
+            bookedDate.getDate() === date.getDate() &&
+            bookedDate.getMonth() === date.getMonth() &&
+            bookedDate.getFullYear() === date.getFullYear()
+        );
+    };
+
+    // Calculate booked dates for a specific room
+    const calculateRoomSpecificBookedDates = (roomId) => {
+        if (!roomId || !allBookings.length) {
+            setRoomSpecificBookedDates([]);
+            return;
+        }
+
+        // Filter bookings for this specific room
+        const roomBookings = allBookings.filter(booking => 
+            booking.room?._id === roomId || booking.room === roomId
+        );
+
+        // Calculate all booked dates for this room
+        const dates = [];
+        roomBookings.forEach(booking => {
+            const checkInStr = booking.checkInDate.split('T')[0];
+            const checkOutStr = booking.checkOutDate.split('T')[0];
+            
+            const checkIn = new Date(checkInStr + 'T00:00:00');
+            const checkOut = new Date(checkOutStr + 'T00:00:00');
+            
+            // Add all dates from check-in to check-out (inclusive)
+            for (let d = new Date(checkIn); d <= checkOut; d.setDate(d.getDate() + 1)) {
+                dates.push(new Date(d));
+            }
+        });
+
+        setRoomSpecificBookedDates(dates);
+    };
+    
+    // Check room availability for selected dates
+    const checkRoomAvailability = async () => {
+        if (!bookingData.checkInDate || !bookingData.checkOutDate) {
+            setErrorMessage('Please select both check-in and check-out dates.');
+            setShowErrorModal(true);
+            return false;
+        }
+        
+        if (!selectedRoom) {
+            setErrorMessage('Please select a room first.');
+            setShowErrorModal(true);
+            return false;
+        }
+        
+        setCheckingAvailability(true);
+        try {
+            const response = await apiClient.post('/rooms/check-availability', {
+                roomId: selectedRoom._id,
+                checkInDate: bookingData.checkInDate,
+                checkOutDate: bookingData.checkOutDate
+            });
+            
+            if (response.data.available) {
+                setAvailabilityStatus('available');
+                setAvailabilityMessage(`✅ Great news! Room ${selectedRoom.roomNumber} is available for your selected dates.`);
+                return true;
+            } else {
+                setAvailabilityStatus('unavailable');
+                if (response.data.conflicts && response.data.conflicts.length > 0) {
+                    const conflict = response.data.conflicts[0];
+                    const conflictCheckIn = new Date(conflict.checkIn).toLocaleDateString('en-IN');
+                    const conflictCheckOut = new Date(conflict.checkOut).toLocaleDateString('en-IN');
+                    setAvailabilityMessage(`❌ Sorry, Room ${selectedRoom.roomNumber} is already booked from ${conflictCheckIn} to ${conflictCheckOut}. Please select different dates.`);
+                } else {
+                    setAvailabilityMessage(response.data.message || 'Room is not available for selected dates.');
+                }
+                setShowAvailabilityModal(true);
+                return false;
+            }
+        } catch (error) {
+            console.error('Failed to check availability:', error);
+            setAvailabilityStatus('error');
+            setAvailabilityMessage('Failed to check availability. Please try again.');
+            setShowAvailabilityModal(true);
+            return false;
+        } finally {
+            setCheckingAvailability(false);
         }
     };
 
@@ -1392,6 +2083,7 @@ export default function UserDashboard({ onLogout, userData }) {
         if (activeView === 'rooms') {
             fetchRooms();
             fetchUserCredits(); // Refresh credits when viewing rooms
+            fetchAllBookings(); // Fetch bookings for calendar
         } else if (activeView === 'bookings') {
             fetchMyBookings();
             fetchUserCredits(); // Refresh credits when viewing bookings
@@ -1403,6 +2095,7 @@ export default function UserDashboard({ onLogout, userData }) {
     useEffect(() => {
         fetchOffers();
         fetchUserCredits();
+        fetchAllBookings(); // Initial fetch of all bookings
     }, [userData.id]);
 
     // Auto-refresh credits every 5 seconds for real-time updates
@@ -1413,6 +2106,26 @@ export default function UserDashboard({ onLogout, userData }) {
         
         return () => clearInterval(interval);
     }, [userData.id]);
+
+    // Auto-check availability when dates change
+    useEffect(() => {
+        if (activeView === 'rooms') {
+            if (filters.checkInDate && filters.checkOutDate) {
+                const checkIn = new Date(filters.checkInDate);
+                const checkOut = new Date(filters.checkOutDate);
+                
+                if (checkOut > checkIn) {
+                    fetchRooms(filters.checkInDate, filters.checkOutDate);
+                }
+            } else if (filters.checkInDate && !filters.checkOutDate) {
+                const nextDay = new Date(filters.checkInDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                fetchRooms(filters.checkInDate, nextDay.toISOString().split('T')[0]);
+            } else if (!filters.checkInDate && !filters.checkOutDate) {
+                fetchRooms();
+            }
+        }
+    }, [filters.checkInDate, filters.checkOutDate, activeView]);
 
     // Apply filters
     const applyFilters = () => {
@@ -1455,6 +2168,12 @@ export default function UserDashboard({ onLogout, userData }) {
     const handleBookRoom = async (e) => {
         e.preventDefault();
         if (!selectedRoom) return;
+        
+        // Check availability first
+        const isAvailable = await checkRoomAvailability();
+        if (!isAvailable) {
+            return; // Availability modal will show the error
+        }
         
         try {
             const response = await apiClient.post('/bookings/add', {
@@ -1503,8 +2222,9 @@ export default function UserDashboard({ onLogout, userData }) {
             
         } catch (error) {
             console.error('Booking failed:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to create booking. Please try again.';
-            alert(errorMessage);
+            const errMsg = error.response?.data?.message || 'Failed to create booking. Please try again.';
+            setErrorMessage(errMsg);
+            setShowErrorModal(true);
         }
     };
 
@@ -1749,6 +2469,121 @@ export default function UserDashboard({ onLogout, userData }) {
         <>
             <h1 className="page-title">Browse Available Rooms</h1>
             
+            {/* Date-Based Availability Filter */}
+            <div className="date-filter-section">
+                <div className="date-filter-content">
+                    <div className="date-filter-header">
+                        <h2 className="date-filter-title">Check Room Availability</h2>
+                        <p className="date-filter-subtitle">Select your dates to see available rooms</p>
+                    </div>
+                    
+                    <div className="date-inputs-wrapper">
+                        <div className="date-input-group">
+                            <label className="date-label">
+                                <span className="date-icon">📅</span>
+                                Check-in Date
+                            </label>
+                            <DatePicker
+                                selected={filters.checkInDate ? new Date(filters.checkInDate + 'T00:00:00') : null}
+                                onChange={(date) => {
+                                    if (date) {
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        const dateStr = `${year}-${month}-${day}`;
+                                        setFilters({...filters, checkInDate: dateStr});
+                                    } else {
+                                        setFilters({...filters, checkInDate: ''});
+                                    }
+                                }}
+                                minDate={new Date()}
+                                excludeDates={bookedDates}
+                                placeholderText="Select check-in date"
+                                dateFormat="dd/MM/yyyy"
+                                className="custom-datepicker"
+                                calendarStartDay={0}
+                            />
+                        </div>
+                        <div className="date-input-group">
+                            <label className="date-label">
+                                <span className="date-icon">📅</span>
+                                Check-out Date
+                            </label>
+                            <DatePicker
+                                selected={filters.checkOutDate ? new Date(filters.checkOutDate + 'T00:00:00') : null}
+                                onChange={(date) => {
+                                    if (date) {
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        const dateStr = `${year}-${month}-${day}`;
+                                        setFilters({...filters, checkOutDate: dateStr});
+                                    } else {
+                                        setFilters({...filters, checkOutDate: ''});
+                                    }
+                                }}
+                                minDate={filters.checkInDate ? (() => {
+                                    const minDate = new Date(filters.checkInDate + 'T00:00:00');
+                                    minDate.setDate(minDate.getDate() + 1);
+                                    return minDate;
+                                })() : new Date()}
+                                excludeDates={bookedDates}
+                                placeholderText="Select check-out date"
+                                dateFormat="dd/MM/yyyy"
+                                className="custom-datepicker"
+                                calendarStartDay={0}
+                                disabled={!filters.checkInDate}
+                            />
+                        </div>
+                    </div>
+                    
+                    {filters.checkInDate && (
+                        <div className="date-buttons-wrapper" style={{justifyContent: 'center'}}>
+                            <button 
+                                onClick={() => {
+                                    setFilters({...filters, checkInDate: '', checkOutDate: ''});
+                                    fetchRooms();
+                                }}
+                                className="btn-clear-dates"
+                            >
+                                <span className="btn-icon">🔄</span>
+                                Clear Dates
+                            </button>
+                        </div>
+                    )}
+                </div>
+                
+                {/* Availability Status Message */}
+                {filters.checkInDate && (
+                    <div className="availability-info">
+                        {loading ? (
+                            <div className="availability-message">
+                                ⏳ Checking availability...
+                            </div>
+                        ) : (
+                            <>
+                                <div className="availability-message">
+                                    {filters.checkOutDate 
+                                        ? `📊 ${new Date(filters.checkInDate).toLocaleDateString('en-IN')} - ${new Date(filters.checkOutDate).toLocaleDateString('en-IN')}`
+                                        : `📊 Checking availability from ${new Date(filters.checkInDate).toLocaleDateString('en-IN')}`
+                                    }
+                                </div>
+                                <div className="availability-stats">
+                                    <span className="stat-item available">
+                                        <span className="stat-icon">✓</span>
+                                        {filteredRooms.filter(r => r.availableForSelectedDates !== false && !r.isBooked).length} Available
+                                    </span>
+                                    <span className="stat-item unavailable">
+                                        <span className="stat-icon">✗</span>
+                                        {filteredRooms.filter(r => r.availableForSelectedDates === false || r.isBooked).length} Not Available
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
+            
             {/* Search & Filter */}
             <div className="search-filter-section">
                 <div className="search-filter-grid">
@@ -1814,42 +2649,80 @@ export default function UserDashboard({ onLogout, userData }) {
                 </div>
             ) : (
                 <div className="rooms-grid">
-                    {filteredRooms.map(room => (
-                        <div key={room._id} className="room-card" onClick={() => {
-                            setSelectedRoom(room);
-                            setShowBookingModal(true);
-                        }}>
-                            <img 
-                                src={room.photoUrl || 'https://placehold.co/600x400/4f46e5/ffffff?text=Room'} 
-                                alt={`Room ${room.roomNumber}`}
-                                className="room-card-image"
-                            />
-                            <div className="room-card-content">
-                                <div className="room-card-header">
-                                    <h3 className="room-card-title">Room {room.roomNumber}</h3>
-                                    <span className={`room-card-status ${room.isBooked ? 'status-booked' : 'status-available'}`}>
-                                        {room.isBooked ? 'Booked' : 'Available'}
-                                    </span>
+                    {filteredRooms.map(room => {
+                        // Determine if room is available for selected dates
+                        const isAvailableForDates = filters.checkInDate && filters.checkOutDate 
+                            ? (room.availableForSelectedDates !== undefined ? room.availableForSelectedDates : !room.isBooked)
+                            : !room.isBooked;
+                        
+                        return (
+                            <div key={room._id} className="room-card" onClick={() => {
+                                setSelectedRoom(room);
+                                calculateRoomSpecificBookedDates(room._id);
+                                // Auto-populate dates from filters if available
+                                if (filters.checkInDate && filters.checkOutDate) {
+                                    setBookingData({
+                                        ...bookingData,
+                                        checkInDate: filters.checkInDate,
+                                        checkOutDate: filters.checkOutDate
+                                    });
+                                }
+                                setShowBookingModal(true);
+                            }}>
+                                <img 
+                                    src={room.photoUrl || 'https://placehold.co/600x400/4f46e5/ffffff?text=Room'} 
+                                    alt={`Room ${room.roomNumber}`}
+                                    className="room-card-image"
+                                />
+                                <div className="room-card-content">
+                                    <div className="room-card-header">
+                                        <h3 className="room-card-title">Room {room.roomNumber}</h3>
+                                        <span className={`room-card-status ${!isAvailableForDates ? 'status-booked' : 'status-available'}`}>
+                                            {!isAvailableForDates ? 'Booked' : 'Available'}
+                                        </span>
+                                    </div>
+                                    <div className="room-card-details">
+                                        <p><strong>Type:</strong> {room.type}</p>
+                                        <p><strong>AC:</strong> {room.hasAC ? 'Yes' : 'No'}</p>
+                                    </div>
+                                    {filters.checkInDate && filters.checkOutDate && (
+                                        <div style={{
+                                            padding: '0.5rem',
+                                            background: isAvailableForDates ? '#dcfce7' : '#fee2e2',
+                                            borderRadius: '6px',
+                                            marginBottom: '0.5rem',
+                                            fontSize: '0.85rem',
+                                            textAlign: 'center',
+                                            color: isAvailableForDates ? '#166534' : '#991b1b'
+                                        }}>
+                                            {isAvailableForDates ? '✅ Available for selected dates' : '❌ Not available for selected dates'}
+                                        </div>
+                                    )}
+                                    <div className="room-card-price">₹{room.price}<span style={{fontSize: '0.875rem', fontWeight: 'normal', color: '#6b7280'}}>/night</span></div>
+                                    <button 
+                                        className="book-now-btn" 
+                                        disabled={!isAvailableForDates}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedRoom(room);
+                                            calculateRoomSpecificBookedDates(room._id);
+                                            // Auto-populate dates from filters if available
+                                            if (filters.checkInDate && filters.checkOutDate) {
+                                                setBookingData({
+                                                    ...bookingData,
+                                                    checkInDate: filters.checkInDate,
+                                                    checkOutDate: filters.checkOutDate
+                                                });
+                                            }
+                                            setShowBookingModal(true);
+                                        }}
+                                    >
+                                        {!isAvailableForDates ? 'Not Available' : 'Book Now'}
+                                    </button>
                                 </div>
-                                <div className="room-card-details">
-                                    <p><strong>Type:</strong> {room.type}</p>
-                                    <p><strong>AC:</strong> {room.hasAC ? 'Yes' : 'No'}</p>
-                                </div>
-                                <div className="room-card-price">₹{room.price}<span style={{fontSize: '0.875rem', fontWeight: 'normal', color: '#6b7280'}}>/night</span></div>
-                                <button 
-                                    className="book-now-btn" 
-                                    disabled={room.isBooked}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedRoom(room);
-                                        setShowBookingModal(true);
-                                    }}
-                                >
-                                    {room.isBooked ? 'Not Available' : 'Book Now'}
-                                </button>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </>
@@ -2327,22 +3200,55 @@ export default function UserDashboard({ onLogout, userData }) {
                                         </div>
                                         <div className="input-group">
                                             <label>Check-In Date</label>
-                                            <input 
-                                                type="date" 
+                                            <DatePicker
+                                                selected={bookingData.checkInDate ? new Date(bookingData.checkInDate + 'T00:00:00') : null}
+                                                onChange={(date) => {
+                                                    if (date) {
+                                                        const year = date.getFullYear();
+                                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                                        const day = String(date.getDate()).padStart(2, '0');
+                                                        const dateStr = `${year}-${month}-${day}`;
+                                                        setBookingData({...bookingData, checkInDate: dateStr});
+                                                    } else {
+                                                        setBookingData({...bookingData, checkInDate: ''});
+                                                    }
+                                                }}
+                                                minDate={new Date()}
+                                                excludeDates={roomSpecificBookedDates}
+                                                placeholderText="Select check-in date"
+                                                dateFormat="dd/MM/yyyy"
+                                                className="custom-datepicker"
+                                                calendarStartDay={0}
                                                 required
-                                                min={new Date().toISOString().split('T')[0]}
-                                                value={bookingData.checkInDate}
-                                                onChange={(e) => setBookingData({...bookingData, checkInDate: e.target.value})}
                                             />
                                         </div>
                                         <div className="input-group">
                                             <label>Check-Out Date</label>
-                                            <input 
-                                                type="date" 
+                                            <DatePicker
+                                                selected={bookingData.checkOutDate ? new Date(bookingData.checkOutDate + 'T00:00:00') : null}
+                                                onChange={(date) => {
+                                                    if (date) {
+                                                        const year = date.getFullYear();
+                                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                                        const day = String(date.getDate()).padStart(2, '0');
+                                                        const dateStr = `${year}-${month}-${day}`;
+                                                        setBookingData({...bookingData, checkOutDate: dateStr});
+                                                    } else {
+                                                        setBookingData({...bookingData, checkOutDate: ''});
+                                                    }
+                                                }}
+                                                minDate={bookingData.checkInDate ? (() => {
+                                                    const minDate = new Date(bookingData.checkInDate + 'T00:00:00');
+                                                    minDate.setDate(minDate.getDate() + 1);
+                                                    return minDate;
+                                                })() : new Date()}
+                                                excludeDates={roomSpecificBookedDates}
+                                                placeholderText="Select check-out date"
+                                                dateFormat="dd/MM/yyyy"
+                                                className="custom-datepicker"
+                                                calendarStartDay={0}
+                                                disabled={!bookingData.checkInDate}
                                                 required
-                                                min={bookingData.checkInDate || new Date().toISOString().split('T')[0]}
-                                                value={bookingData.checkOutDate}
-                                                onChange={(e) => setBookingData({...bookingData, checkOutDate: e.target.value})}
                                             />
                                         </div>
                                         
@@ -2472,6 +3378,100 @@ export default function UserDashboard({ onLogout, userData }) {
                                     onClick={confirmCancelBooking}
                                 >
                                     Yes, Cancel Booking
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error Modal */}
+                {showErrorModal && (
+                    <div className="modal-overlay" onClick={() => setShowErrorModal(false)}>
+                        <div className="modal-content" style={{maxWidth: '450px'}} onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header" style={{borderBottom: '2px solid #fca5a5', paddingBottom: '1rem'}}>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                                    <div style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        borderRadius: '50%',
+                                        background: '#fee2e2',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#dc2626'
+                                    }}>
+                                        <svg style={{width: '30px', height: '30px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                    <h2 style={{color: '#dc2626', margin: 0}}>Error</h2>
+                                </div>
+                                <button className="modal-close-btn" onClick={() => setShowErrorModal(false)}>&times;</button>
+                            </div>
+                            <div className="modal-body" style={{padding: '1.5rem'}}>
+                                <p style={{fontSize: '1.1rem', lineHeight: '1.6', color: '#374151'}}>{errorMessage}</p>
+                            </div>
+                            <div className="modal-footer" style={{borderTop: '1px solid #e5e7eb', paddingTop: '1rem'}}>
+                                <button 
+                                    className="btn btn-primary" 
+                                    onClick={() => setShowErrorModal(false)}
+                                    style={{width: '100%'}}
+                                >
+                                    OK, Got it
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Availability Modal */}
+                {showAvailabilityModal && (
+                    <div className="modal-overlay" onClick={() => setShowAvailabilityModal(false)}>
+                        <div className="modal-content" style={{maxWidth: '500px'}} onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header" style={{
+                                borderBottom: availabilityStatus === 'available' ? '2px solid #86efac' : '2px solid #fca5a5',
+                                paddingBottom: '1rem'
+                            }}>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                                    <div style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        borderRadius: '50%',
+                                        background: availabilityStatus === 'available' ? '#dcfce7' : '#fee2e2',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: availabilityStatus === 'available' ? '#16a34a' : '#dc2626'
+                                    }}>
+                                        {availabilityStatus === 'available' ? (
+                                            <svg style={{width: '30px', height: '30px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            <svg style={{width: '30px', height: '30px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <h2 style={{
+                                        color: availabilityStatus === 'available' ? '#16a34a' : '#dc2626',
+                                        margin: 0
+                                    }}>
+                                        {availabilityStatus === 'available' ? 'Room Available!' : 'Room Not Available'}
+                                    </h2>
+                                </div>
+                                <button className="modal-close-btn" onClick={() => setShowAvailabilityModal(false)}>&times;</button>
+                            </div>
+                            <div className="modal-body" style={{padding: '1.5rem'}}>
+                                <p style={{fontSize: '1.1rem', lineHeight: '1.6', color: '#374151'}}>{availabilityMessage}</p>
+                            </div>
+                            <div className="modal-footer" style={{borderTop: '1px solid #e5e7eb', paddingTop: '1rem'}}>
+                                <button 
+                                    className="btn btn-primary" 
+                                    onClick={() => setShowAvailabilityModal(false)}
+                                    style={{width: '100%'}}
+                                >
+                                    {availabilityStatus === 'available' ? 'Continue Booking' : 'Choose Different Dates'}
                                 </button>
                             </div>
                         </div>

@@ -452,10 +452,198 @@ app.post('/api/users/:id/upload-profile', upload.single('profilePicture'), async
 });
 
 // --- Room Routes ---
-app.get('/api/rooms', (req, res) => {
-    Room.find()
-        .then(rooms => res.json(rooms))
-        .catch(err => res.status(400).json('Error: ' + err));
+// Get all rooms with real-time date-based availability
+app.get('/api/rooms', async (req, res) => {
+    try {
+        const { checkInDate, checkOutDate } = req.query;
+        const rooms = await Room.find();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        
+        // Process each room to add availability information
+        const roomsWithAvailability = await Promise.all(rooms.map(async (room) => {
+            const roomObj = room.toObject();
+            
+            // If specific dates are provided, check availability for those dates
+            if (checkInDate && checkOutDate) {
+                const searchCheckInStr = checkInDate;
+                const searchCheckOutStr = checkOutDate;
+                
+                // Find bookings that overlap with search dates
+                // A booking overlaps if:
+                // - Booking check-in is before or on search check-out date
+                // - Booking check-out is after or on search check-in date
+                const conflictingBookings = await Booking.find({
+                    room: room._id,
+                    status: { $in: ['Requested', 'Confirmed', 'Active'] }
+                });
+                
+                // Check for date overlap using string comparison (ISO format YYYY-MM-DD)
+                const hasConflict = conflictingBookings.some(booking => {
+                    const bookingCheckIn = booking.checkInDate.toISOString().split('T')[0];
+                    const bookingCheckOut = booking.checkOutDate.toISOString().split('T')[0];
+                    
+                    // Overlap exists if: searchCheckIn <= bookingCheckOut AND searchCheckOut >= bookingCheckIn
+                    return searchCheckInStr <= bookingCheckOut && searchCheckOutStr >= bookingCheckIn;
+                });
+                
+                roomObj.availableForSelectedDates = !hasConflict;
+                roomObj.isBooked = hasConflict;
+            } else {
+                // No specific dates provided - check if room is currently booked (today)
+                const currentBookings = await Booking.find({
+                    room: room._id,
+                    status: { $in: ['Confirmed', 'Active'] },
+                    checkInDate: { $lte: today },
+                    checkOutDate: { $gt: today }
+                });
+                
+                roomObj.isBooked = currentBookings.length > 0;
+                roomObj.currentlyBooked = currentBookings.length > 0;
+                
+                // Also get upcoming bookings count
+                const upcomingBookings = await Booking.countDocuments({
+                    room: room._id,
+                    status: { $in: ['Requested', 'Confirmed'] },
+                    checkInDate: { $gt: today }
+                });
+                
+                roomObj.upcomingBookingsCount = upcomingBookings;
+            }
+            
+            return roomObj;
+        }));
+        
+        res.json(roomsWithAvailability);
+    } catch (err) {
+        res.status(400).json('Error: ' + err.message);
+    }
+});
+
+// Check room availability for specific date range
+app.post('/api/rooms/check-availability', async (req, res) => {
+    try {
+        const { roomId, checkInDate, checkOutDate, excludeBookingId } = req.body;
+        
+        if (!roomId || !checkInDate || !checkOutDate) {
+            return res.status(400).json({ 
+                available: false, 
+                message: 'Room ID, check-in date, and check-out date are required.' 
+            });
+        }
+        
+        const checkIn = new Date(checkInDate);
+        const checkOut = new Date(checkOutDate);
+        
+        // Validate dates
+        if (checkIn >= checkOut) {
+            return res.status(400).json({ 
+                available: false, 
+                message: 'Check-out date must be after check-in date.' 
+            });
+        }
+        
+        if (checkIn < new Date()) {
+            return res.status(400).json({ 
+                available: false, 
+                message: 'Check-in date cannot be in the past.' 
+            });
+        }
+        
+        // Find overlapping bookings (excluding Rejected and current booking if updating)
+        const query = {
+            room: roomId,
+            status: { $in: ['Requested', 'Confirmed', 'Active'] },
+            $or: [
+                // New booking starts during an existing booking
+                { checkInDate: { $lte: checkIn }, checkOutDate: { $gt: checkIn } },
+                // New booking ends during an existing booking
+                { checkInDate: { $lt: checkOut }, checkOutDate: { $gte: checkOut } },
+                // New booking completely contains an existing booking
+                { checkInDate: { $gte: checkIn }, checkOutDate: { $lte: checkOut } }
+            ]
+        };
+        
+        // Exclude specific booking if provided (for updates)
+        if (excludeBookingId) {
+            query._id = { $ne: excludeBookingId };
+        }
+        
+        const conflictingBookings = await Booking.find(query).populate('user', 'name email');
+        
+        if (conflictingBookings.length > 0) {
+            return res.json({ 
+                available: false, 
+                message: 'Room is not available for the selected dates.',
+                conflicts: conflictingBookings.map(b => ({
+                    checkIn: b.checkInDate,
+                    checkOut: b.checkOutDate,
+                    status: b.status,
+                    guestName: b.guestName
+                }))
+            });
+        }
+        
+        res.json({ 
+            available: true, 
+            message: 'Room is available for the selected dates.' 
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            available: false, 
+            message: 'Error checking availability: ' + err.message 
+        });
+    }
+});
+
+// Get available rooms for a specific date range
+app.post('/api/rooms/available', async (req, res) => {
+    try {
+        const { checkInDate, checkOutDate, roomType } = req.body;
+        
+        if (!checkInDate || !checkOutDate) {
+            return res.status(400).json({ 
+                message: 'Check-in date and check-out date are required.' 
+            });
+        }
+        
+        const checkIn = new Date(checkInDate);
+        const checkOut = new Date(checkOutDate);
+        
+        // Get all rooms (optionally filtered by type)
+        const roomQuery = roomType ? { type: roomType } : {};
+        const allRooms = await Room.find(roomQuery);
+        
+        // Find all conflicting bookings
+        const conflictingBookings = await Booking.find({
+            status: { $in: ['Requested', 'Confirmed', 'Active'] },
+            $or: [
+                { checkInDate: { $lte: checkIn }, checkOutDate: { $gt: checkIn } },
+                { checkInDate: { $lt: checkOut }, checkOutDate: { $gte: checkOut } },
+                { checkInDate: { $gte: checkIn }, checkOutDate: { $lte: checkOut } }
+            ]
+        });
+        
+        // Get IDs of booked rooms
+        const bookedRoomIds = conflictingBookings.map(b => b.room.toString());
+        
+        // Filter available rooms
+        const availableRooms = allRooms.filter(room => 
+            !bookedRoomIds.includes(room._id.toString())
+        );
+        
+        res.json({ 
+            availableRooms,
+            totalRooms: allRooms.length,
+            availableCount: availableRooms.length,
+            checkInDate,
+            checkOutDate
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            message: 'Error fetching available rooms: ' + err.message 
+        });
+    }
 });
 
 // Add room with photo upload
@@ -568,8 +756,46 @@ app.delete('/api/rooms/:id', async (req, res) => {
     }
 });
 
+// Get booking schedule for a specific room
+app.get('/api/rooms/:id/bookings', async (req, res) => {
+    try {
+        const roomId = req.params.id;
+        const { includeCompleted } = req.query;
+        
+        // Build query
+        const query = { room: roomId };
+        
+        // By default, only show active and future bookings
+        if (includeCompleted !== 'true') {
+            query.status = { $in: ['Requested', 'Confirmed', 'Active'] };
+        }
+        
+        const bookings = await Booking.find(query)
+            .populate('user', 'name email phone')
+            .sort({ checkInDate: 1 });
+        
+        res.json({
+            roomId,
+            bookings,
+            count: bookings.length
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            message: 'Error fetching room bookings: ' + err.message 
+        });
+    }
+});
 
-// --- Booking Routes (UPDATED) ---
+
+// --- Booking Routes (UPDATED WITH DATE-BASED AVAILABILITY) ---
+// 
+// DATE-BASED AVAILABILITY SYSTEM:
+// --------------------------------
+// Rooms can now be booked multiple times for different date ranges
+// The system checks for overlapping bookings to prevent conflicts
+// When a user checks out (even early), the room becomes available for new bookings
+// The 'isBooked' field is now a simple indicator; actual availability is date-based
+//
 
 app.get('/api/bookings', async (req, res) => {
     try {
@@ -596,6 +822,39 @@ app.post('/api/bookings/add', async (req, res) => {
     try {
         if (!userId) {
             return res.status(400).json('User ID is required for booking.');
+        }
+        
+        // Validate dates
+        const checkIn = new Date(checkInDate);
+        const checkOut = new Date(checkOutDate);
+        
+        if (checkIn >= checkOut) {
+            return res.status(400).json({ message: 'Check-out date must be after check-in date.' });
+        }
+        
+        if (checkIn < new Date()) {
+            return res.status(400).json({ message: 'Check-in date cannot be in the past.' });
+        }
+        
+        // Check for date conflicts with existing bookings
+        const conflictingBookings = await Booking.find({
+            room: room,
+            status: { $in: ['Requested', 'Confirmed', 'Active'] },
+            $or: [
+                // New booking starts during an existing booking
+                { checkInDate: { $lte: checkIn }, checkOutDate: { $gt: checkIn } },
+                // New booking ends during an existing booking
+                { checkInDate: { $lt: checkOut }, checkOutDate: { $gte: checkOut } },
+                // New booking completely contains an existing booking
+                { checkInDate: { $gte: checkIn }, checkOutDate: { $lte: checkOut } }
+            ]
+        });
+        
+        if (conflictingBookings.length > 0) {
+            const conflict = conflictingBookings[0];
+            return res.status(400).json({ 
+                message: `Room is not available for the selected dates. It is already booked from ${new Date(conflict.checkInDate).toLocaleDateString('en-IN')} to ${new Date(conflict.checkOutDate).toLocaleDateString('en-IN')}.` 
+            });
         }
         
         let finalAmount = 0;
@@ -687,19 +946,41 @@ app.post('/api/bookings/add', async (req, res) => {
             .populate('room')
             .populate('user', 'name email phone');
         
+        // Update room's isBooked status based on today's date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Check if this new booking covers today
+        const checkInDate_obj = new Date(checkInDate);
+        const checkOutDate_obj = new Date(checkOutDate);
+        
+        if (checkInDate_obj <= today && checkOutDate_obj > today) {
+            // Booking covers today, mark room as booked
+            await Room.findByIdAndUpdate(room, { isBooked: true });
+        } else {
+            // Booking is in the future or past, check current status
+            const currentBookings = await Booking.find({
+                room: room,
+                status: { $in: ['Confirmed', 'Active'] },
+                checkInDate: { $lte: today },
+                checkOutDate: { $gt: today }
+            });
+            await Room.findByIdAndUpdate(room, { 
+                isBooked: currentBookings.length > 0 
+            });
+        }
+        
         // Send notifications with complete pricing details
         const userPhone = populatedBooking.user.phone;
         const userEmail = populatedBooking.user.email;
         const roomNumber = populatedBooking.room.roomNumber;
         const roomType = populatedBooking.room.type;
         const roomPrice = populatedBooking.room.price;
-        const checkIn = new Date(checkInDate).toLocaleDateString('en-IN');
-        const checkOut = new Date(checkOutDate).toLocaleDateString('en-IN');
+        const checkInFormatted = checkIn.toLocaleDateString('en-IN');
+        const checkOutFormatted = checkOut.toLocaleDateString('en-IN');
         
         // Calculate pricing details
-        const checkInDate_obj = new Date(checkInDate);
-        const checkOutDate_obj = new Date(checkOutDate);
-        const numberOfNights = Math.ceil((checkOutDate_obj - checkInDate_obj) / (1000 * 60 * 60 * 24));
+        const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
         const totalAmount = roomPrice * numberOfNights;
         
         // Build pricing breakdown
@@ -734,8 +1015,8 @@ Your booking request has been received:
    Room: ${roomNumber} (${roomType})
    
 📅 STAY DURATION:
-   Check-in: ${checkIn}
-   Check-out: ${checkOut}
+   Check-in: ${checkInFormatted}
+   Check-out: ${checkOutFormatted}
    Nights: ${numberOfNights}
 
 ${pricingDetails}
@@ -762,8 +1043,8 @@ Thank you for choosing HotelMaster! 🌟`;
    Room Type: ${roomType}
    
 📅 STAY DURATION:
-   Check-in: ${checkIn}
-   Check-out: ${checkOut}
+   Check-in: ${checkInFormatted}
+   Check-out: ${checkOutFormatted}
    Number of Nights: ${numberOfNights}
 
 ${pricingDetails}
@@ -965,12 +1246,22 @@ app.put('/api/bookings/:id/status', async (req, res) => {
             
         if (!booking) return res.status(404).json('Booking not found.');
 
-        // Logic for updating room availability based on the new status
-        if (status === 'Confirmed' || status === 'Active') {
-            await Room.findByIdAndUpdate(booking.room._id, { isBooked: true });
-        } else if (status === 'Completed' || status === 'Rejected') {
-            await Room.findByIdAndUpdate(booking.room._id, { isBooked: false });
-        }
+        // Update room availability based on date-based logic
+        // Check if room is booked for TODAY (real-time status)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const currentBookings = await Booking.find({
+            room: booking.room._id,
+            status: { $in: ['Confirmed', 'Active'] },
+            checkInDate: { $lte: today },
+            checkOutDate: { $gt: today }
+        });
+        
+        // Update isBooked field to reflect if room is booked TODAY
+        await Room.findByIdAndUpdate(booking.room._id, { 
+            isBooked: currentBookings.length > 0 
+        });
 
         // Award credits when booking is completed
         if (status === 'Completed') {
@@ -1105,6 +1396,96 @@ ${status === 'Active' ? 'Guest has checked in' : 'Guest has checked out'}`;
         res.json(booking);
     } catch (err) {
         res.status(400).json('Error updating status: ' + err.message);
+    }
+});
+
+// Early checkout endpoint
+app.put('/api/bookings/:id/early-checkout', async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id)
+            .populate('room')
+            .populate('user', 'name email phone');
+            
+        if (!booking) return res.status(404).json({ message: 'Booking not found.' });
+        
+        if (booking.status !== 'Active') {
+            return res.status(400).json({ 
+                message: 'Only active bookings can be checked out.' 
+            });
+        }
+        
+        const now = new Date();
+        const originalCheckOut = new Date(booking.checkOutDate);
+        
+        // Update booking to completed and set checkout date to now
+        booking.status = 'Completed';
+        booking.checkOutDate = now;
+        await booking.save();
+        
+        // Update room availability based on current date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const currentBookings = await Booking.find({
+            room: booking.room._id,
+            status: { $in: ['Confirmed', 'Active'] },
+            checkInDate: { $lte: today },
+            checkOutDate: { $gt: today }
+        });
+        
+        await Room.findByIdAndUpdate(booking.room._id, { 
+            isBooked: currentBookings.length > 0 
+        });
+        
+        // Calculate if credits should be adjusted (optional: pro-rate for early checkout)
+        const totalDays = Math.ceil((originalCheckOut - new Date(booking.checkInDate)) / (1000 * 60 * 60 * 24));
+        const actualDays = Math.ceil((now - new Date(booking.checkInDate)) / (1000 * 60 * 60 * 24));
+        
+        // Notify user about early checkout
+        const userPhone = booking.user.phone;
+        const guestName = booking.guestName;
+        const roomNumber = booking.room.roomNumber;
+        
+        const notificationMessage = `👋 EARLY CHECK-OUT SUCCESSFUL!
+
+Hello ${guestName}! 💙
+
+You have successfully checked out early from:
+📍 Room: ${roomNumber}
+📅 Original Check-out: ${originalCheckOut.toLocaleDateString('en-IN')}
+📅 Actual Check-out: ${now.toLocaleDateString('en-IN')}
+🏨 Days stayed: ${actualDays} days
+
+Thank you for staying with us!
+We hope you had a wonderful experience!
+
+Room is now available for new bookings. 🌟
+
+HotelMaster Team 🏨`;
+        
+        await sendNotification(userPhone, notificationMessage, 'EARLY CHECK-OUT');
+        
+        // Notify admin
+        const adminMessage = `📊 EARLY CHECK-OUT
+
+Room ${roomNumber}:
+Guest: ${guestName}
+Original checkout: ${originalCheckOut.toLocaleDateString('en-IN')}
+Actual checkout: ${now.toLocaleDateString('en-IN')}
+Days stayed: ${actualDays}/${totalDays}
+
+Room is now available for new bookings.`;
+        
+        await sendNotification(ADMIN_PHONE, adminMessage, 'EARLY CHECKOUT ALERT');
+        
+        res.json({ 
+            message: 'Early checkout successful!',
+            booking: booking,
+            daysStayed: actualDays,
+            totalDaysBooked: totalDays
+        });
+    } catch (err) {
+        res.status(400).json({ message: 'Error processing early checkout: ' + err.message });
     }
 });
 

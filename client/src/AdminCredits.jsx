@@ -352,6 +352,148 @@ const AdminCreditsStyles = () => (
             font-size: 0.875rem;
         }
         
+        /* Delete Confirmation Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .modal-icon {
+            width: 3rem;
+            height: 3rem;
+            background: #fee2e2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .modal-icon svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #dc2626;
+        }
+        
+        .modal-title {
+            flex: 1;
+        }
+        
+        .modal-title h3 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.25rem;
+            color: #111827;
+            font-weight: 700;
+        }
+        
+        .modal-title p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .modal-body {
+            padding: 1.5rem 2rem;
+        }
+        
+        .modal-body p {
+            margin: 0 0 1rem 0;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        
+        .offer-details-box {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+        
+        .offer-details-box p {
+            margin: 0.5rem 0;
+            font-size: 0.875rem;
+            color: #1f2937;
+        }
+        
+        .offer-details-box strong {
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        
+        .modal-btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .modal-btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .modal-btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        
+        .modal-btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
         @media (max-width: 768px) {
             .admin-credits-wrapper {
                 padding: 1rem;
@@ -392,6 +534,8 @@ export default function AdminCredits() {
     // Form states
     const [showOfferForm, setShowOfferForm] = useState(false);
     const [editingOffer, setEditingOffer] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [offerToDelete, setOfferToDelete] = useState(null);
     const [offerForm, setOfferForm] = useState({
         title: '',
         description: '',
@@ -524,18 +668,24 @@ export default function AdminCredits() {
         setShowOfferForm(true);
     };
 
-    const handleDeleteOffer = async (offerId) => {
-        if (!window.confirm('Are you sure you want to delete this offer?')) {
-            return;
-        }
+    const handleDeleteClick = (offer) => {
+        setOfferToDelete(offer);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDeleteOffer = async () => {
+        if (!offerToDelete) return;
         
         try {
-            await apiClient.delete(`/offers/${offerId}`);
+            await apiClient.delete(`/offers/${offerToDelete._id}`);
             setSuccess('Offer deleted successfully!');
+            setShowDeleteModal(false);
+            setOfferToDelete(null);
             fetchOffers();
             setTimeout(() => setSuccess(''), 5000);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to delete offer.');
+            setShowDeleteModal(false);
         }
     };
 
@@ -732,7 +882,7 @@ export default function AdminCredits() {
                                                         </button>
                                                         <button 
                                                             className="action-btn delete-btn"
-                                                            onClick={() => handleDeleteOffer(offer._id)}
+                                                            onClick={() => handleDeleteClick(offer)}
                                                         >
                                                             Delete
                                                         </button>
@@ -851,6 +1001,48 @@ export default function AdminCredits() {
                                 </table>
                             </div>
                         )}
+                    </div>
+                )}
+                
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && offerToDelete && (
+                    <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <div className="modal-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div className="modal-title">
+                                    <h3>Delete Offer?</h3>
+                                    <p>This action cannot be undone</p>
+                                </div>
+                            </div>
+                            <div className="modal-body">
+                                <p>Are you sure you want to permanently delete this offer?</p>
+                                <div className="offer-details-box">
+                                    <p><strong>Title:</strong> {offerToDelete.title}</p>
+                                    <p><strong>Points Required:</strong> {offerToDelete.pointsRequired}</p>
+                                    <p><strong>Discount:</strong> {offerToDelete.discountType === 'percentage' ? `${offerToDelete.discountValue}%` : `₹${offerToDelete.discountValue}`} off</p>
+                                    <p><strong>Status:</strong> {offerToDelete.isActive ? 'Active' : 'Inactive'}</p>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button 
+                                    className="modal-btn modal-btn-secondary"
+                                    onClick={() => setShowDeleteModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    className="modal-btn modal-btn-danger"
+                                    onClick={confirmDeleteOffer}
+                                >
+                                    Yes, Delete Offer
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

@@ -71,6 +71,106 @@ const BookingsStyles = () => (
             from { transform: translateY(-100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        
+        /* Error Modal */
+        .error-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .error-modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        
+        .error-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .error-modal-icon {
+            width: 3rem;
+            height: 3rem;
+            background: #fee2e2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .error-modal-icon svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #dc2626;
+        }
+        
+        .error-modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+        
+        .error-modal-body {
+            margin-bottom: 2rem;
+        }
+        
+        .error-modal-body p {
+            color: #4b5563;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .error-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .error-modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .error-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
 
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 768px) {
@@ -122,6 +222,8 @@ export default function Bookings() {
     const [showModal, setShowModal] = useState(false);
     const [selectedRoomDetails, setSelectedRoomDetails] = useState(null);
     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [newBooking, setNewBooking] = useState({
         guestName: '',
         room: '',
@@ -152,7 +254,8 @@ export default function Bookings() {
     const handleAddBooking = async (e) => {
         e.preventDefault();
         if (!newBooking.room || !newBooking.guestName || !newBooking.checkInDate || !newBooking.checkOutDate) {
-            alert("Please fill out all fields.");
+            setErrorMessage("Please fill out all fields before submitting.");
+            setShowErrorModal(true);
             return;
         }
         try {
@@ -165,7 +268,8 @@ export default function Bookings() {
             setTimeout(() => setShowSuccessPopup(false), 4000);
         } catch (error) {
             console.error("Failed to add booking request:", error);
-            alert(`Error: ${error.response?.data || 'Could not send booking request.'}`);
+            setErrorMessage(error.response?.data || 'Could not send booking request. Please try again.');
+            setShowErrorModal(true);
         }
     };
 
@@ -175,7 +279,8 @@ export default function Bookings() {
             fetchData();
         } catch (error) {
             console.error(`Failed to update status to ${status}:`, error);
-            alert(`Error: ${error.response?.data || `Could not update status.`}`);
+            setErrorMessage(error.response?.data || `Could not update status. Please try again.`);
+            setShowErrorModal(true);
         }
     };
 
@@ -310,6 +415,33 @@ export default function Bookings() {
                             <button className="success-popup-close" onClick={() => setShowSuccessPopup(false)}>
                                 &times;
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error Modal */}
+                {showErrorModal && (
+                    <div className="error-modal-overlay" onClick={() => setShowErrorModal(false)}>
+                        <div className="error-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="error-modal-header">
+                                <div className="error-modal-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h2 className="error-modal-title">Error</h2>
+                            </div>
+                            <div className="error-modal-body">
+                                <p>{errorMessage}</p>
+                            </div>
+                            <div className="error-modal-footer">
+                                <button 
+                                    className="error-modal-btn"
+                                    onClick={() => setShowErrorModal(false)}
+                                >
+                                    OK
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

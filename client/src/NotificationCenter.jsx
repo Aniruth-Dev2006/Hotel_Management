@@ -346,6 +346,148 @@ const NotificationCenterStyles = () => (
             margin-bottom: 0.5rem;
         }
         
+        /* Delete Confirmation Modal */
+        .delete-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .delete-modal-content {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        
+        .delete-modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .delete-modal-icon {
+            width: 3rem;
+            height: 3rem;
+            background: #fee2e2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .delete-modal-icon svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #dc2626;
+        }
+        
+        .delete-modal-title {
+            flex: 1;
+        }
+        
+        .delete-modal-title h3 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.25rem;
+            color: #111827;
+            font-weight: 700;
+        }
+        
+        .delete-modal-title p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .delete-modal-body {
+            padding: 1.5rem 2rem;
+        }
+        
+        .delete-modal-body p {
+            margin: 0 0 1rem 0;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        
+        .notification-details-box {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+        
+        .notification-details-box p {
+            margin: 0.5rem 0;
+            font-size: 0.875rem;
+            color: #1f2937;
+        }
+        
+        .notification-details-box strong {
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .delete-modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .delete-modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        
+        .delete-modal-btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .delete-modal-btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .delete-modal-btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        
+        .delete-modal-btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
         @media (max-width: 1024px) {
             .notification-grid {
                 grid-template-columns: 1fr;
@@ -375,6 +517,8 @@ export default function NotificationCenter() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [notificationToDelete, setNotificationToDelete] = useState(null);
     
     const [formData, setFormData] = useState({
         recipientType: 'all',
@@ -477,16 +621,22 @@ export default function NotificationCenter() {
         }
     };
 
-    const handleDeleteNotification = async (notificationId) => {
-        if (!window.confirm('Are you sure you want to delete this notification record?')) {
-            return;
-        }
+    const handleDeleteClick = (notification) => {
+        setNotificationToDelete(notification);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDeleteNotification = async () => {
+        if (!notificationToDelete) return;
         
         try {
-            await apiClient.delete(`/notifications/custom/${notificationId}`);
+            await apiClient.delete(`/notifications/custom/${notificationToDelete._id}`);
+            setShowDeleteModal(false);
+            setNotificationToDelete(null);
             fetchNotificationHistory();
         } catch (err) {
             console.error('Failed to delete notification:', err);
+            setShowDeleteModal(false);
         }
     };
 
@@ -651,7 +801,7 @@ export default function NotificationCenter() {
                                             </span>
                                             <button
                                                 className="delete-history-btn"
-                                                onClick={() => handleDeleteNotification(notification._id)}
+                                                onClick={() => handleDeleteClick(notification)}
                                             >
                                                 Delete
                                             </button>
@@ -662,6 +812,47 @@ export default function NotificationCenter() {
                         </div>
                     </div>
                 </div>
+                
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && notificationToDelete && (
+                    <div className="delete-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+                        <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="delete-modal-header">
+                                <div className="delete-modal-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div className="delete-modal-title">
+                                    <h3>Delete Notification Record?</h3>
+                                    <p>This action cannot be undone</p>
+                                </div>
+                            </div>
+                            <div className="delete-modal-body">
+                                <p>Are you sure you want to permanently delete this notification record?</p>
+                                <div className="notification-details-box">
+                                    <p><strong>Subject:</strong> {notificationToDelete.subject}</p>
+                                    <p><strong>Message:</strong> {notificationToDelete.message}</p>
+                                    <p><strong>Recipients:</strong> {notificationToDelete.recipientType === 'all' ? 'All Users' : `${notificationToDelete.recipients.length} User(s)`}</p>
+                                </div>
+                            </div>
+                            <div className="delete-modal-footer">
+                                <button 
+                                    className="delete-modal-btn delete-modal-btn-secondary"
+                                    onClick={() => setShowDeleteModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    className="delete-modal-btn delete-modal-btn-danger"
+                                    onClick={confirmDeleteNotification}
+                                >
+                                    Yes, Delete Record
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

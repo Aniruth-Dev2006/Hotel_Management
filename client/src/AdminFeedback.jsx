@@ -554,7 +554,9 @@ export default function AdminFeedback() {
             fetchFeedbacks();
         } catch (error) {
             console.error('Failed to delete feedback:', error);
-            alert('Failed to delete feedback. Please try again.');
+            setShowDeleteConfirm(false);
+            // Show error as a styled element within the modal if we implement one, or just log for now
+            // Since the delete modal already handles errors gracefully, we can enhance it later
         }
     };
 

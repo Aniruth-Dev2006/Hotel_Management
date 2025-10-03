@@ -370,6 +370,158 @@ const UserCreditsStyles = () => (
             font-size: 0.875rem;
         }
         
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        /* Modal Content */
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            animation: slideUp 0.4s ease-out;
+            position: relative;
+            text-align: center;
+        }
+        
+        /* Success Icon */
+        .success-icon-wrapper {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleIn 0.5s ease-out 0.2s both;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+        
+        .success-icon-wrapper svg {
+            width: 60px;
+            height: 60px;
+            color: white;
+            stroke-width: 3;
+        }
+        
+        /* Modal Title */
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Modal Message */
+        .modal-message {
+            color: #6b7280;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        /* Credits Info in Modal */
+        .modal-credits-info {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            border: 2px solid #10b981;
+        }
+        
+        .modal-credits-label {
+            font-size: 0.875rem;
+            color: #065f46;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .modal-credits-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #10b981;
+            margin: 0;
+        }
+        
+        .modal-credits-value .points-unit {
+            font-size: 1.25rem;
+            color: #059669;
+            margin-left: 0.5rem;
+        }
+        
+        /* Close Button */
+        .modal-close-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 0.875rem 2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+        
+        .modal-close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+        }
+        
+        .modal-close-btn:active {
+            transform: translateY(0);
+        }
+        
         @media (max-width: 1024px) {
             .credits-content {
                 grid-template-columns: 1fr;
@@ -394,15 +546,46 @@ const UserCreditsStyles = () => (
                 padding: 1.5rem;
             }
         }
+        
+        @media (max-width: 480px) {
+            .modal-content {
+                padding: 2rem 1.5rem;
+            }
+            
+            .success-icon-wrapper {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .success-icon-wrapper svg {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .modal-title {
+                font-size: 1.5rem;
+            }
+            
+            .modal-message {
+                font-size: 0.95rem;
+            }
+            
+            .modal-credits-value {
+                font-size: 2rem;
+            }
+            
+            .modal-credits-value .points-unit {
+                font-size: 1rem;
+            }
+        }
     `}</style>
 );
 
-export default function UserCredits({ userData, refreshTrigger }) {
+export default function UserCredits({ userData, refreshTrigger, onNavigateToRooms }) {
     const [credits, setCredits] = useState({ points: 0, totalEarned: 0, totalRedeemed: 0 });
     const [offers, setOffers] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -456,26 +639,9 @@ export default function UserCredits({ userData, refreshTrigger }) {
         }
     };
 
-    const handleRedeem = async (offerId) => {
-        setError('');
-        setSuccess('');
-        setLoading(true);
-
-        try {
-            const response = await apiClient.post('/credits/redeem', {
-                userId: userData.id,
-                offerId: offerId
-            });
-            
-            setSuccess(response.data.message);
-            fetchCredits();
-            fetchTransactions();
-            
-            setTimeout(() => setSuccess(''), 5000);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to redeem offer.');
-        } finally {
-            setLoading(false);
+    const handleUseNow = () => {
+        if (onNavigateToRooms) {
+            onNavigateToRooms();
         }
     };
 
@@ -504,15 +670,6 @@ export default function UserCredits({ userData, refreshTrigger }) {
                 <p className="credits-subtitle">
                     Earn credits with every booking and redeem them for amazing offers!
                 </p>
-                
-                {success && (
-                    <div className="success-message">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {success}
-                    </div>
-                )}
                 
                 {error && (
                     <div className="error-message">{error}</div>
@@ -586,13 +743,14 @@ export default function UserCredits({ userData, refreshTrigger }) {
                                                 </div>
                                             </div>
                                             
-                                            <button
-                                                className="redeem-btn"
-                                                onClick={() => handleRedeem(offer._id)}
-                                                disabled={!canAfford || loading}
-                                            >
-                                                {loading ? 'Processing...' : canAfford ? 'Redeem Now' : 'Not Enough Credits'}
-                                            </button>
+                                            {canAfford && (
+                                                <button
+                                                    className="redeem-btn"
+                                                    onClick={handleUseNow}
+                                                >
+                                                    Use Now 🎯
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })}

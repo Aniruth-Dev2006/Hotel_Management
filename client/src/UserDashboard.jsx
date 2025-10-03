@@ -3137,7 +3137,7 @@ export default function UserDashboard({ onLogout, userData }) {
                 <div className="user-main-content">
                     {activeView === 'rooms' && renderRoomsView()}
                     {activeView === 'bookings' && renderBookingsView()}
-                    {activeView === 'credits' && <UserCredits userData={userData} refreshTrigger={userCredits} />}
+                    {activeView === 'credits' && <UserCredits userData={userData} refreshTrigger={userCredits} onNavigateToRooms={() => setActiveView('rooms')} />}
                     {activeView === 'notifications' && <UserNotifications userData={userData} />}
                     {activeView === 'feedback' && <Feedback userData={userData} />}
                     {activeView === 'profile' && renderProfileView()}
@@ -3189,13 +3189,13 @@ export default function UserDashboard({ onLogout, userData }) {
                                 {!selectedRoom.isBooked && (
                                     <>
                                         {/* Credit Offers Section */}
-                                        {availableOffers.length > 0 ? (
-                                            <div className="credit-offers-section">
-                                                <h3>💎 Available Credit Offers</h3>
-                                                <div className="offers-grid">
-                                                    {availableOffers
-                                                        .filter(offer => (Number(userCredits.points) || 0) >= offer.pointsRequired)
-                                                        .map(offer => {
+                                        {(() => {
+                                            const affordableOffers = availableOffers.filter(offer => (Number(userCredits.points) || 0) >= offer.pointsRequired);
+                                            return affordableOffers.length > 0 ? (
+                                                <div className="credit-offers-section">
+                                                    <h3>💎 Available Credit Offers</h3>
+                                                    <div className="offers-grid">
+                                                        {affordableOffers.map(offer => {
                                                             // Check if dates are available for calculation
                                                             const checkIn = new Date(bookingData.checkInDate);
                                                             const checkOut = new Date(bookingData.checkOutDate);
@@ -3280,15 +3280,8 @@ export default function UserDashboard({ onLogout, userData }) {
                                                     }
                                                 })()}
                                             </div>
-                                        ) : (
-                                            <div className="credit-offers-section">
-                                                <h3>💎 Credit Offers</h3>
-                                                <div className="no-offers-message">
-                                                    <p>No offers available at the moment.</p>
-                                                    <p>Check back later for new offers!</p>
-                                                </div>
-                                            </div>
-                                        )}
+                                        ) : null;
+                                        })()}
                                         
                                         <form className="booking-form" onSubmit={handleBookRoom}>
                                             <h3>Booking Information</h3>

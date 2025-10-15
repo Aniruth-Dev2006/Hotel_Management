@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar.jsx';
 import Rooms from './Rooms.jsx';
@@ -106,6 +106,16 @@ const DashboardStyles = () => (
             color: #6b7280;
         }
 
+        /* Spin animation for refresh button */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* Mobile Responsive Styles */
         @media (max-width: 768px) {
             .summary-container {
@@ -149,39 +159,54 @@ const DashboardSummary = () => {
     const [stats, setStats] = useState({ totalRooms: 0, availableRooms: 0, pendingRequests: 0, totalBookings: 0 });
     const [ongoingBookings, setOngoingBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState(null);
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            // UPDATED: Added a call to get ALL bookings for the total count
+            const [roomsRes, activeBookingsRes, requestedBookingsRes, allBookingsRes] = await Promise.all([
+                apiClient.get('/rooms'),
+                apiClient.get('/bookings?status=Active'),
+                apiClient.get('/bookings?status=Requested'),
+                apiClient.get('/bookings') // Fetches all bookings regardless of status
+            ]);
+            
+            const totalRooms = roomsRes.data.length;
+            
+            // Calculate occupied rooms based on Active bookings (guests who have checked in)
+            const activeBookings = activeBookingsRes.data;
+            const occupiedRoomIds = new Set(activeBookings.map(b => b.room?._id || b.room));
+            const occupiedRooms = occupiedRoomIds.size;
+            const availableRooms = totalRooms - occupiedRooms;
+            
+            // UPDATED: Set the totalBookings count in the state
+            setStats({ 
+                totalRooms, 
+                availableRooms, 
+                pendingRequests: requestedBookingsRes.data.length,
+                totalBookings: allBookingsRes.data.length 
+            });
+            setOngoingBookings(activeBookingsRes.data);
+            setLastUpdated(new Date());
+
+        } catch (error) {
+            console.error("Failed to fetch summary data", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                // UPDATED: Added a call to get ALL bookings for the total count
-                const [roomsRes, activeBookingsRes, requestedBookingsRes, allBookingsRes] = await Promise.all([
-                    apiClient.get('/rooms'),
-                    apiClient.get('/bookings?status=Active'),
-                    apiClient.get('/bookings?status=Requested'),
-                    apiClient.get('/bookings') // Fetches all bookings regardless of status
-                ]);
-                
-                const totalRooms = roomsRes.data.length;
-                const availableRooms = roomsRes.data.filter(r => !r.isBooked).length;
-                
-                // UPDATED: Set the totalBookings count in the state
-                setStats({ 
-                    totalRooms, 
-                    availableRooms, 
-                    pendingRequests: requestedBookingsRes.data.length,
-                    totalBookings: allBookingsRes.data.length 
-                });
-                setOngoingBookings(activeBookingsRes.data);
-
-            } catch (error) {
-                console.error("Failed to fetch summary data", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+        // Fetch data immediately on mount
         fetchData();
-    }, []);
+
+        // Auto-refresh every 30 seconds
+        const intervalId = setInterval(fetchData, 30000);
+
+        // Cleanup interval on unmount
+        return () => clearInterval(intervalId);
+    }, [fetchData]);
     
     const occupancyRate = stats.totalRooms > 0 ? ((stats.totalRooms - stats.availableRooms) / stats.totalRooms * 100).toFixed(0) : 0;
 
@@ -189,7 +214,48 @@ const DashboardSummary = () => {
 
     return (
         <div className="summary-container">
-            <header className="dashboard-header"><h1>Dashboard</h1></header>
+            <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <h1>Dashboard</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {lastUpdated && (
+                        <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                            Last updated: {lastUpdated.toLocaleTimeString()}
+                        </span>
+                    )}
+                    <button 
+                        onClick={fetchData}
+                        disabled={loading}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#6366f1',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '0.375rem',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            opacity: loading ? 0.7 : 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        <svg 
+                            style={{ 
+                                width: '1rem', 
+                                height: '1rem',
+                                animation: loading ? 'spin 1s linear infinite' : 'none'
+                            }} 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {loading ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                </div>
+            </header>
             <div className="summary-cards">
                  <div className="summary-card">
                     <div className="summary-card-icon" style={{backgroundColor: '#6366f1'}}><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a3.002 3.002 0 013.39-2.456M12 11a4 4 0 110-8 4 4 0 010 8z" /></svg></div>
